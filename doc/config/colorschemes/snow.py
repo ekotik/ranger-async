@@ -1,1 +1,1 @@
-../../../ranger/colorschemes/snow.py
+../../../ranger_async/colorschemes/snow.py

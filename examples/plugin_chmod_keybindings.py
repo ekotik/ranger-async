@@ -1,4 +1,4 @@
-# Compatible with ranger 1.6.0 through ranger 1.7.*
+# Compatible with ranger-async 1.6.0 through ranger-async 1.7.*
 #
 # This plugin serves as an example for adding key bindings through a plugin.
 # It could replace the ten lines in the rc.conf that create the key bindings
@@ -6,10 +6,10 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-import ranger.api
+import ranger_async.api
 
 
-HOOK_INIT_OLD = ranger.api.hook_init
+HOOK_INIT_OLD = ranger_async.api.hook_init
 
 
 def hook_init(fm):
@@ -23,4 +23,4 @@ def hook_init(fm):
             fm.execute_console(command.format('+', mode, perm))
 
 
-ranger.api.hook_init = hook_init
+ranger_async.api.hook_init = hook_init

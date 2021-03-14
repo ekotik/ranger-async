@@ -1,1 +1,1 @@
-../../ranger/data/scope.sh
+../../ranger_async/data/scope.sh

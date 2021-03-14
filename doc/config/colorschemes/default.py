@@ -1,1 +1,1 @@
-../../../ranger/colorschemes/default.py
+../../../ranger_async/colorschemes/default.py

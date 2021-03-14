@@ -1,38 +1,38 @@
-ranger 1.9.3
+ranger-async 1.9.3
 ============
 
-<img src="https://ranger.github.io/ranger_logo.png" width="150">
+<img src="https://ranger-async.github.io/ranger-async_logo.png" width="150">
 
-[![Build Status](https://travis-ci.org/ranger/ranger.svg?branch=master)](https://travis-ci.org/ranger/ranger)
-<a href="https://repology.org/metapackage/ranger/versions">
-  <img src="https://repology.org/badge/latest-versions/ranger.svg" alt="latest packaged version(s)">
+[![Build Status](https://travis-ci.org/ranger-async/ranger-async.svg?branch=master)](https://travis-ci.org/ranger-async/ranger-async)
+<a href="https://repology.org/metapackage/ranger-async/versions">
+  <img src="https://repology.org/badge/latest-versions/ranger-async.svg" alt="latest packaged version(s)">
 </a>
 
-ranger is a console file manager with VI key bindings.  It provides a
+ranger-async is a console file manager with VI key bindings.  It provides a
 minimalistic and nice curses interface with a view on the directory hierarchy.
 It ships with `rifle`, a file launcher that is good at automatically finding
 out which program to use for what file type.
 
-![screenshot](https://raw.githubusercontent.com/ranger/ranger-assets/master/screenshots/screenshot.png)
+![screenshot](https://raw.githubusercontent.com/ranger-async/ranger-async-assets/master/screenshots/screenshot.png)
 
 For `mc` aficionados there's also the multi-pane viewmode.
 
 <p>
-<img src="https://raw.githubusercontent.com/ranger/ranger-assets/master/screenshots/twopane.png" alt="two panes" width="49%" />
-<img src="https://raw.githubusercontent.com/ranger/ranger-assets/master/screenshots/multipane.png" alt="multiple panes" width="49%" />
+<img src="https://raw.githubusercontent.com/ranger-async/ranger-async-assets/master/screenshots/twopane.png" alt="two panes" width="49%" />
+<img src="https://raw.githubusercontent.com/ranger-async/ranger-async-assets/master/screenshots/multipane.png" alt="multiple panes" width="49%" />
 </p>
 
-This file describes ranger and how to get it to run.  For instructions on the
-usage, please read the man page (`man ranger` in a terminal).  See `HACKING.md`
+This file describes ranger-async and how to get it to run.  For instructions on the
+usage, please read the man page (`man ranger-async` in a terminal).  See `HACKING.md`
 for development-specific information.
 
-For configuration, check the files in `ranger/config/` or copy the
-default config to `~/.config/ranger` with `ranger --copy-config`
+For configuration, check the files in `ranger_async/config/` or copy the
+default config to `~/.config/ranger-async` with `ranger-async --copy-config`
 (see [instructions](#getting-started)).
 
 The `examples/` directory contains several scripts and plugins that demonstrate how
-ranger can be extended or combined with other programs.  These files can be
-found in the git repository or in `/usr/share/doc/ranger`.
+ranger-async can be extended or combined with other programs.  These files can be
+found in the git repository or in `/usr/share/doc/ranger-async`.
 
 A note to packagers: Versions meant for packaging are listed in the changelog
 on the website.
@@ -42,10 +42,10 @@ About
 -----
 * Authors:     see `AUTHORS` file
 * License:     GNU General Public License Version 3
-* Website:     https://ranger.github.io/
-* Download:    https://ranger.github.io/ranger-stable.tar.gz
-* Bug reports: https://github.com/ranger/ranger/issues
-* git clone    https://github.com/ranger/ranger.git
+* Website:     *TODO: fix website link*
+* Download:    *TODO: fix download link*
+* Bug reports: https://github.com/ekotik/ranger-async/issues
+* git clone    https://github.com/ekotik/ranger-async.git
 
 
 Design Goals
@@ -65,7 +65,7 @@ Features
 * Renaming multiple files at once
 * VIM-like console and hotkeys
 * Automatically determine file types and run them with correct programs
-* Change the directory of your shell after exiting ranger
+* Change the directory of your shell after exiting ranger-async
 * Tabs, bookmarks, mouse support...
 
 
@@ -109,27 +109,27 @@ For enhanced file previews (with `scope.sh`):
 
 Installing
 ----------
-Use the package manager of your operating system to install ranger.
-You can also install ranger through PyPI: ```pip install ranger-fm```.
+Use the package manager of your operating system to install ranger-async.
+You can also install ranger-async through PyPI: ```pip install ranger-async-fm```.
 
 <details>
   <summary>
     Check current version:
     <sub>
-      <a href="https://repology.org/metapackage/ranger/versions">
-        <img src="https://repology.org/badge/tiny-repos/ranger.svg" alt="Packaging status">
+      <a href="https://repology.org/metapackage/ranger-async/versions">
+        <img src="https://repology.org/badge/tiny-repos/ranger-async.svg" alt="Packaging status">
       </a>
     </sub>
   </summary>
-  <a href="https://repology.org/metapackage/ranger/versions">
-    <img src="https://repology.org/badge/vertical-allrepos/ranger.svg" alt="Packaging status">
+  <a href="https://repology.org/metapackage/ranger-async/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/ranger-async.svg" alt="Packaging status">
   </a>
 </details>
 
 ### Installing from a clone
-Note that you don't *have* to install ranger; you can simply run `ranger.py`.
+Note that you don't *have* to install ranger-async; you can simply run `ranger_async.py`.
 
-To install ranger manually:
+To install ranger-async manually:
 ```
 sudo make install
 ```
@@ -140,25 +140,25 @@ sudo python setup.py install --optimize=1 --record=install_log.txt
 ```
 
 This also saves a list of all installed files to `install_log.txt`, which you can
-use to uninstall ranger.
+use to uninstall ranger-async.
 
 
 Getting Started
 ---------------
-After starting ranger, you can use the Arrow Keys or `h` `j` `k` `l` to
+After starting ranger-async, you can use the Arrow Keys or `h` `j` `k` `l` to
 navigate, `Enter` to open a file or `q` to quit.  The third column shows a
 preview of the current file.  The second is the main column and the first shows
 the parent directory.
 
-Ranger can automatically copy default configuration files to `~/.config/ranger`
+Ranger-Async can automatically copy default configuration files to `~/.config/ranger-async`
 if you run it with the switch `--copy-config=( rc | scope | ... | all )`.
-See `ranger --help` for a description of that switch.  Also check
-`ranger/config/` for the default configuration.
+See `ranger-async --help` for a description of that switch.  Also check
+`ranger_async/config/` for the default configuration.
 
 
 Going Further
 ---------------
-* To get the most out of ranger, read the [Official User Guide](https://github.com/ranger/ranger/wiki/Official-user-guide).
+* To get the most out of ranger-async, read the [Official User Guide](https://github.com/ranger/ranger/wiki/Official-user-guide).
 * For frequently asked questions, see the [FAQ](https://github.com/ranger/ranger/wiki/FAQ%3A-Frequently-Asked-Questions).
 * For more information on customization, see the [wiki](https://github.com/ranger/ranger/wiki).
 
@@ -166,5 +166,5 @@ Going Further
 Community
 ---------------
 For help, support, or if you just want to hang out with us, you can find us here:
-* **IRC**: channel **#ranger** on [freenode](https://freenode.net/kb/answer/chat)
-* **Reddit**: [r/ranger](https://www.reddit.com/r/ranger/)
+* **IRC**: channel **#ranger-async** on [freenode](https://freenode.net/kb/answer/chat)
+* **Reddit**: [r/ranger-async](https://www.reddit.com/r/ranger-async/)

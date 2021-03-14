@@ -4,11 +4,11 @@ from __future__ import (absolute_import, division, print_function)
 
 import subprocess
 
-import ranger.api
-from ranger.ext.spawn import check_output
+import ranger_async.api
+from ranger_async.ext.spawn import check_output
 
 
-HOOK_INIT_OLD = ranger.api.hook_init
+HOOK_INIT_OLD = ranger_async.api.hook_init
 
 
 def hook_init(fm):
@@ -22,4 +22,4 @@ def hook_init(fm):
     return HOOK_INIT_OLD(fm)
 
 
-ranger.api.hook_init = hook_init
+ranger_async.api.hook_init = hook_init

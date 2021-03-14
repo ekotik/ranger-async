@@ -1,1 +1,1 @@
-../../../ranger/colorschemes/jungle.py
+../../../ranger_async/colorschemes/jungle.py

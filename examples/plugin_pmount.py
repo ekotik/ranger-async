@@ -1,4 +1,4 @@
-# Tested with ranger 1.7.2
+# Tested with ranger-async 1.7.2
 #
 # This plugin creates a bunch of keybindings used to mount and unmount
 # the devices using pmount(1).
@@ -11,14 +11,14 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-import ranger.api
+import ranger_async.api
 
 MOUNT_KEY = '<alt>m'
 UMOUNT_KEY = '<alt>M'
 LIST_MOUNTS_KEY = '<alt>N'
 
 
-HOOK_INIT_OLD = ranger.api.hook_init
+HOOK_INIT_OLD = ranger_async.api.hook_init
 
 
 def hook_init(fm):
@@ -39,4 +39,4 @@ def hook_init(fm):
     return HOOK_INIT_OLD(fm)
 
 
-ranger.api.hook_init = hook_init
+ranger_async.api.hook_init = hook_init

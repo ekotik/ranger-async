@@ -18,14 +18,14 @@ This log documents changes between stable versions.
 * Added previews for 3d models using `openscad`
 * Added previews of MS Office documents
 * Added scrolling in preview
-* Added trash functionality to ranger, as alternative to deleting files
+* Added trash functionality to ranger-async, as alternative to deleting files
 * Added zathura to rifle
 * Changed `c/p/tunmap` to `unc/p/tmap` respectively, fixing them in the process
 * Changed argument order for `tag_toggle`
 * Fixed `chmod` behavior with `000` quantifier
 * Fixed a crash involving `Ctrl+space`
 * Fixed behavior of statusbar when resizing terminal window
-* Fixed busyloop when ranger's STDIN was closed
+* Fixed busyloop when ranger-async's STDIN was closed
 * Fixed drawing of borders in st
 * Fixed handling of macros for `chain`
 * Fixed unicode decoding errors for previews
@@ -69,21 +69,21 @@ This log documents changes between stable versions.
 * Added option to disable the display of free space for high latency situations
 * Added section to `scope.sh` for pdf previews with mutool
 * Added several emacs/readline-inspired keybindings, `C-g` for `ESC`, `alt-f/b`
-* Added systemwide `rc.conf` and `commands.py` in `/etc/ranger`
+* Added systemwide `rc.conf` and `commands.py` in `/etc/ranger-async`
 * Added the `%any_path` macro to allow bookmarks to be used with commands that
   need a path and are unaware of bookmarks
 * Added versioning logic to include extra info in unreleased versions
 * Change tab saving to save all tabs, not just the active tab
 * Changed `draw_borders` setting to enable drawing only borders or seperators
-* Changed behavior of positional arguments to the ranger command, if you
-  specify a path to a file ranger will open with that file selected
+* Changed behavior of positional arguments to the ranger-async command, if you
+  specify a path to a file ranger-async will open with that file selected
 * Changed the `tilde_in_titlebar` setting to influence the window titlebar too
 * Changed the default colorscheme to work properly in terminals that don't
   equate bold and bright
 * Fixed StopIteration errors
 * Fixed embedded null errors
 * Fixed issues reported by coverity scan
-* Fixed running ranger as root on Mac OS
+* Fixed running ranger-async as root on Mac OS
 * Fixed unicode issue for python2
 * Fixed w3m preview issues with black stripes
 * Improved PEP8 adherence
@@ -125,18 +125,18 @@ This log documents changes between stable versions.
 * Fixed crash when previewing files encoded in little-endian UTF-16
 * Fixed flicker in previewing symlinked images
 * Fixed detection of location of scope.sh
-* Fixed crash when running ranger from the directory containing its package
+* Fixed crash when running ranger-async from the directory containing its package
 * Fixed cursor position after moving half a page down and back up
 * Fixed handling of lines that are too long for the console
 * Added `<F2>` binding to `:rename_append`
-* Avoid dereferencing symlinked directory when starting ranger in one
+* Avoid dereferencing symlinked directory when starting ranger-async in one
 * Added support for `file://` URIs as path arguments
 * Added setting `save_tabs_on_exit`
 * Added setting `cd_tab_case`, sets case sensitivity of `:cd` tab completion
 * Added setting `cd_tab_smart`, allows fuzzy tab completion with `:cd`,
   for example, `:cd /u/lo/b<TAB>` expands to `:cd /usr/local/bin`
 * Added setting `global_inode_type_filter` to show only directories when
-  running ranger with the new option `--show-only-dirs`
+  running ranger-async with the new option `--show-only-dirs`
 * Added setting `save_backtick_bookmark`, e.g. for easier syncing of bookmarks
 * Added setting `one_indexed` to start counting line numbers from 1
 * Added rifle.conf entries to list/extract archives without atool
@@ -156,7 +156,7 @@ This log documents changes between stable versions.
 * Fixed smart case matching in `:travel`
 * Fixed automatically disabling `preview_script` when running as root
 * Fixed crash on sshfs disconnect
-* Fixed crash on missing `~/.config/ranger/history`
+* Fixed crash on missing `~/.config/ranger-async/history`
 * Fixed crash when path not accessible during start-up
 * Fixed automatic tmux title
 * Fixed urxvt image previewing when running tmux
@@ -177,15 +177,15 @@ This log documents changes between stable versions.
 * Added key binding 'zz' as an alternative to 'zf'
 * Added option `-c` to the `rifle` file opener command
 * Added support for `$XDG_DATA_HOME`
-* Avoid exiting ranger while copying.  Use `:quit!` to quit while copying.
+* Avoid exiting ranger-async while copying.  Use `:quit!` to quit while copying.
 * Improved scope.sh (better performance & readability)
 * Improved logs handling by migrating to the python standard logging library (PR #725)
-* Changed `ranger --choosefiles` to return all selected files in all paths
+* Changed `ranger-async --choosefiles` to return all selected files in all paths
 * Changed interpretation of commands: treat tabs as argument separators
 * Changed `<C-n>` to open new tab in current directory rather than `$HOME`
 * Changed `:quit!` to only close 1 tab.  Use `:quitall` to close all tabs.
 * Removed backward compatibility for `options.py`, predecessor of `rc.conf`
-* Automatically update bookmarks+tags when renaming them via ranger
+* Automatically update bookmarks+tags when renaming them via ranger-async
 
 # 2017-01-08: version 1.8.1
 * Fixed `:scout` break due to incompatible change in python 3.6
@@ -193,12 +193,12 @@ This log documents changes between stable versions.
 # 2016-12-24: version 1.8.0
 * scope.sh is now needed for the now fully scriptable image previews
 * Overhaul of version control system integration, now with threads
-* Fixed ranger not finding the location of w3mimgdisplay in most cases
+* Fixed ranger-async not finding the location of w3mimgdisplay in most cases
 * Fixed many minor bugs
 * Added midnight-commander like multipane view, toggleable with `~` key.
   It displays the current directory of all the open tabs next to each other.
 * Added autodetect for 256 color support in scope.sh source code preview
-* Added macro `%confdir` that expands to `~/.config/ranger` by default
+* Added macro `%confdir` that expands to `~/.config/ranger-async` by default
 * Added possibility to toggle/cycle through options with `set <option_name>!`
 * Added `Mm`/`Ms` key to enable the linemode showing modification time
 * Added `yt`/`dt` keys to toggle whether file is in copy/cut buffer
@@ -238,13 +238,13 @@ This log documents changes between stable versions.
 
 # 2015-04-13: version 1.7.0
 * The default editor is now `vim` instead of `nano`
-* Added automatic updates of tags when a file is renamed from within ranger
+* Added automatic updates of tags when a file is renamed from within ranger-async
 * Added `preview_images_method` which can be set to `iterm2` to use native
   iTerm2 image previews
 * Added `:rename_append` command to rename files without the file extension
 * Added `:linemode` command to change the way the files are displayed
   Try this out by pressing M followed by one of the suggested keys.
-  New linemodes can be added with `ranger.api.register_linemode()`.
+  New linemodes can be added with `ranger_async.api.register_linemode()`.
 * Added `:filter_inode_type` command to only show directories, files or links
 * Added `:meta` command for managing custom file metadata
 * Added `:flat` command for displaying subdirectories
@@ -255,14 +255,14 @@ This log documents changes between stable versions.
 * `:mkdir` can now create multiple directory levels (like `mkdir -p`)
 * `:help` (key binding `?`) is now interactive
 * `:find` (key binding `/`) is now case insensitive by default
-* `ranger --copy-config=all` now copies a short sample commands.py rather than
-  the full one, so that you can update ranger without having broken commands.
-  The full commands.py is still copied to `~/.config/ranger/commands_full.py`.
+* `ranger-async --copy-config=all` now copies a short sample commands.py rather than
+  the full one, so that you can update ranger-async without having broken commands.
+  The full commands.py is still copied to `~/.config/ranger-async/commands_full.py`.
 * Fixed broken copying of symlinks
 
 # 2013-05-24: Version 1.6.1
 * Added support for version control systems, see:
-  http://lists.nongnu.org/archive/html/ranger-users/2013-03/msg00007.html
+  http://lists.nongnu.org/archive/html/ranger-async-users/2013-03/msg00007.html
 * Added :scout command as a unified backend to :find, :search, etc
 * Added `open_all_images` setting to remove the need for external scripts
   to handle opening of all images in a directory at once.
@@ -271,15 +271,15 @@ This log documents changes between stable versions.
 # 2013-02-22: Version 1.6.0
 * Overhauled all config files.  Please update them or use the --clean switch
 * Added `examples/` directory to source code which contains sample programs or
-  plugins that can be used together with ranger
+  plugins that can be used together with ranger-async
 * Added progress bars to copying, moving and directory loading processes
 * Added feature to draw images inside the console using w3mimgdisplay (you need
   to add `set preview_images true` in rc.conf)
 * Added a plugin system like in the program `anki`, i.e. place any python file
-  into ~/.config/ranger/plugins/ and it will be imported by ranger
+  into ~/.config/ranger-async/plugins/ and it will be imported by ranger-async
 * Added a separate file launcher named `rifle` that is configured through
   rifle.conf and is installed as a standalone program.
-  Using `ranger [filename]` from the shell for opening files is deprecated now,
+  Using `ranger-async [filename]` from the shell for opening files is deprecated now,
   please use `rifle [filename]` instead.
 * Added `uq` keybinding to undo closed tabs
 * Added :setlocal command to change settings for specific directories only
@@ -300,19 +300,19 @@ This log documents changes between stable versions.
 * Changed the flag `d` (for detached) to `f` (for fork) in program launcher
 * Changed appearance of keybinding-hints and bookmarks
 * Changed tabs with 4 spaces in the source code (see PEP 8)
-* Removed ranger.core.environment class
+* Removed ranger_async.core.environment class
 * Removed settings: `colorscheme_overlay`, `draw_bookmark_borders`,
   `init_function`, `load_default_rc`
 * Fixed zombie process apocalypse
 * Fixed `draw_borders=true` in combination with `padding_right=false`
 
 # 2012-08-10: Version 1.5.5
-* Ensure that detached programs continue to run when ranger is killed
+* Ensure that detached programs continue to run when ranger-async is killed
 
 # 2012-05-03: Version 1.5.4
 * Added exiftool to scope.sh by default
 * Fixed a crash when entering a directory with a unicode name
-* Speedup in `ranger.ext.get_executables`
+* Speedup in `ranger_async.ext.get_executables`
 
 # 2012-03-05: Version 1.5.3
 * Added --selectfile option that selects a certain file on startup
@@ -321,8 +321,8 @@ This log documents changes between stable versions.
 * Added --profile option for additional debug information on exit
 * Added a visual mode (activate with `V`, deactivate with Esc)
 * Added a reversed visual mode (activate with `uV`)
-* Added `$RANGER_LEVEL` environment variable which ranger sets to `1` or higher
-  so programs can know that they were spawned from ranger
+* Added `$RANGER_ASYNC_LEVEL` environment variable which ranger-async sets to `1` or higher
+  so programs can know that they were spawned from ranger-async
 * Added run flag `r` for running with root privileges (needs sudo)
 * Added run flag `t` for running in a new terminal (as specified in $TERMCMD)
 * Added :relink command to change destinations of symlinks
@@ -333,8 +333,8 @@ This log documents changes between stable versions.
 * Improved drawing speed
 * Fixed unexpected behavior when displaying nonprintable characters
 * Fixed :bulkrename to work with files starting with a minus sign
-* Fixed RangerChooser example in man page
-* Fixed crash when opening images with sxiv/feh by running `ranger <image>`
+* Fixed Ranger-AsyncChooser example in man page
+* Fixed crash when opening images with sxiv/feh by running `ranger-async <image>`
 
 # 2011-10-23: Version 1.5.2
 * Fixed graphical bug that appears in certain cases when drawing
@@ -395,11 +395,11 @@ This log documents changes between stable versions.
 * Fixed blocking when using interactive scripts in scope.sh
 * Fixed issues with ALT key
 * Fixed pager crash when trying to read non-readable file
-* Forbid piping things into ranger
+* Forbid piping things into ranger-async
 * Improved hints
 
 # 2011-04-05: Version 1.4.3
-* Fixed mimetype checking when invoking ranger with a filename
+* Fixed mimetype checking when invoking ranger-async with a filename
 * Fixed loss of bookmarks when disk is full
 * Minor improvements
 
@@ -419,7 +419,7 @@ This log documents changes between stable versions.
 * Added option `padding_right` to remove whitespace if theres no preview
 * Added command `:search_inc` for incremental search
 * Added commands `:save_copy_buffer` and `:load_copy_buffer` to share
-  the copied files between ranger instances
+  the copied files between ranger-async instances
 * Added mimeopen as a fallback if no useful application can be found
 * Added natural sort, sorts 1foo before 10foo. (type `on`)
 * Added keys: yp, yd and yb to copy path, dirname or basename to seleciton
@@ -448,9 +448,9 @@ This log documents changes between stable versions.
 * Fixed yy/pp bug when yanking multiple directories
 
 # 2010-09-13: Version 1.2.0
-* !!! Changed the default configuration directory to ~/.config/ranger !!!
+* !!! Changed the default configuration directory to ~/.config/ranger-async !!!
 * Removed `Console Modes`, each old mode is now a simple command
-* Disabled file previews by default if ranger is used by root
+* Disabled file previews by default if ranger-async is used by root
 * Allow to jump to specific help sections by typing two numbers, e.g. 13?
 * Added keys: da, dr, ya, yr for adding and removing files from copy buffer
 * Added keys: gl and gL to resolve links, see 11?
@@ -462,7 +462,7 @@ This log documents changes between stable versions.
 
 # 2010-07-17: Version 1.1.2
 * Fix crash when using scrollwheel to scroll down in some cases
-* The command `ranger dir1 dir2 ...` opens multiple directories in tabs
+* The command `ranger-async dir1 dir2 ...` opens multiple directories in tabs
 * Removed pydoc html documentation by default, re-create it with `make doc`
 * Minor fixes
 
@@ -475,7 +475,7 @@ This log documents changes between stable versions.
 * Added a man page
 * Tab support
 * Improved directory loading performance
-* Commands are definable in ~/.ranger/commands.py
+* Commands are definable in ~/.ranger-async/commands.py
 * Case insensitive sorting (type zs)
 * Better UTF support
 * Possibility to turn off previews (zp and zP)
@@ -483,6 +483,6 @@ This log documents changes between stable versions.
 * Ask for confirmation when using :delete
 * New invocation flag: --fail-unless-cd
 * New hotkeys, commands, options.
-* New syntax for ~/.ranger/keys.py
+* New syntax for ~/.ranger-async/keys.py
 * Several user contributions
 * And tons of general improvements

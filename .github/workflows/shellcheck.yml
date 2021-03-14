@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/shellcheck.yml'
-      - 'ranger/data/scope.sh'
+      - 'ranger_async/data/scope.sh'
 
 jobs:
   test_shellcheck:

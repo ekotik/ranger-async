@@ -5,7 +5,7 @@ usage: ./convert_papermode_to_metadata.py
 This script converts the .paperinfo CSV file in the current directory to an
 equivalent .metadata.json file.
 
-ranger used to store metadata in .paperinfo files, but that format was rather
+ranger-async used to store metadata in .paperinfo files, but that format was rather
 limited, so .metadata.json files were introduced.
 """
 

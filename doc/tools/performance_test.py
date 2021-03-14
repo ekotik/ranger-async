@@ -10,24 +10,24 @@ sys.path.insert(0, '.')
 
 
 def main():
-    import ranger.container.directory
-    import ranger.core.shared
-    import ranger.container.settings
-    import ranger.core.fm
-    from ranger.ext.openstruct import OpenStruct
-    ranger.args = OpenStruct()
-    ranger.args.clean = True
-    ranger.args.debug = False
+    import ranger_async.container.directory
+    import ranger_async.core.shared
+    import ranger_async.container.settings
+    import ranger_async.core.fm
+    from ranger_async.ext.openstruct import OpenStruct
+    ranger_async.args = OpenStruct()
+    ranger_async.args.clean = True
+    ranger_async.args.debug = False
 
-    settings = ranger.container.settings.Settings()
-    ranger.core.shared.SettingsAware.settings_set(settings)
-    fm = ranger.core.fm.FM()
-    ranger.core.shared.FileManagerAware.fm_set(fm)
+    settings = ranger_async.container.settings.Settings()
+    ranger_async.core.shared.SettingsAware.settings_set(settings)
+    fm = ranger_async.core.fm.FM()
+    ranger_async.core.shared.FileManagerAware.fm_set(fm)
 
     time1 = time.time()
     fm.initialize()
     try:
-        usr = ranger.container.directory.Directory('/usr')
+        usr = ranger_async.container.directory.Directory('/usr')
         usr.load_content(schedule=False)
         for fileobj in usr.files:
             if fileobj.is_directory:

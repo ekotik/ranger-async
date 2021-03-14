@@ -1,7 +1,7 @@
-# Tested with ranger 1.9.1
+# Tested with ranger-async 1.9.1
 #
 # A very simple and possibly buggy support for AVFS
-# (http://avf.sourceforge.net/), that allows ranger to handle
+# (http://avf.sourceforge.net/), that allows ranger-async to handle
 # archives.
 #
 # Run `:avfs' to browse the selected archive.
@@ -11,7 +11,7 @@ from __future__ import (absolute_import, division, print_function)
 import os
 import os.path
 
-from ranger.api.commands import Command
+from ranger_async.api.commands import Command
 
 
 class avfs(Command):  # pylint: disable=invalid-name

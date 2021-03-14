@@ -1,1 +1,1 @@
-../../ranger/config/commands.py
+../../ranger_async/config/commands.py

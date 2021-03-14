@@ -1,19 +1,19 @@
-# Compatible since ranger 1.7.0
+# Compatible since ranger-async 1.7.0
 #
 # This sample plugin adds a new linemode displaying the filename in rot13.
-# Load this plugin by copying it to ~/.config/ranger/plugins/ and activate
-# the linemode by typing ":linemode rot13" in ranger.  Type Mf to restore
+# Load this plugin by copying it to ~/.config/ranger-async/plugins/ and activate
+# the linemode by typing ":linemode rot13" in ranger-async.  Type Mf to restore
 # the default linemode.
 
 from __future__ import (absolute_import, division, print_function)
 
 import codecs
 
-import ranger.api
-from ranger.core.linemode import LinemodeBase
+import ranger_async.api
+from ranger_async.core.linemode import LinemodeBase
 
 
-@ranger.api.register_linemode
+@ranger_async.api.register_linemode
 class MyLinemode(LinemodeBase):
     name = "rot13"
 

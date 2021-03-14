@@ -8,11 +8,11 @@
 
 #### RUNTIME ENVIRONMENT
 <!-- Details of your runtime environment -->
-<!-- Retrieve Python/ranger version and locale with `ranger -\-version` -->
+<!-- Retrieve Python/ranger-async version and locale with `ranger-async -\-version` -->
 - Operating system and version: 
 - Terminal emulator and version: 
 - Python version: 
-- Ranger version/commit: 
+- Ranger-Async version/commit: 
 - Locale: 
 
 #### CHECKLIST
