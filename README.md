@@ -1,6 +1,11 @@
 ranger-async 1.9.3
 ============
 
+ranger-async is unstable, fake and buggy personal learning project for Python
+asyncio stuff which brings `None` improvements to the ranger FM.
+
+Use https://github.com/ranger/ranger original instead.
+
 <img src="https://ranger-async.github.io/ranger-async_logo.png" width="150">
 
 [![Build Status](https://travis-ci.org/ranger-async/ranger-async.svg?branch=master)](https://travis-ci.org/ranger-async/ranger-async)
