@@ -3,12 +3,14 @@
 
 """The base GUI element for views on the directory"""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import curses
+
 from ranger_async.ext.keybinding_parser import key_to_string
-from . import Widget
+
 from ..displayable import DisplayableContainer
+from . import Widget
 
 
 class ViewBase(Widget, DisplayableContainer):  # pylint: disable=too-many-instance-attributes
@@ -20,7 +22,7 @@ class ViewBase(Widget, DisplayableContainer):  # pylint: disable=too-many-instan
     def __init__(self, win):  # pylint: disable=super-init-not-called
         DisplayableContainer.__init__(self, win)
 
-        self.fm.signal_bind('move', self.request_clear)
+        self.fm.signal_bind("move", self.request_clear)
         self.old_draw_borders = self.settings.draw_borders
 
         self.columns = None
@@ -56,8 +58,11 @@ class ViewBase(Widget, DisplayableContainer):  # pylint: disable=too-many-instan
                 pass
         else:
             col_x = self.main_column.x
-            col_y = self.main_column.y + self.main_column.target.pointer \
+            col_y = (
+                self.main_column.y
+                + self.main_column.target.pointer
                 - self.main_column.scroll_begin
+            )
             try:
                 self.fm.ui.win.move(col_y, col_x)
             except curses.error:
@@ -71,9 +76,9 @@ class ViewBase(Widget, DisplayableContainer):  # pylint: disable=too-many-instan
 
         sorted_bookmarks = sorted(
             (
-                item for item in self.fm.bookmarks
-                if self.fm.settings.show_hidden_bookmarks
-                or '/.' not in item[1].path
+                item
+                for item in self.fm.bookmarks
+                if self.fm.settings.show_hidden_bookmarks or "/." not in item[1].path
             ),
             key=lambda t: t[0].lower(),
         )
@@ -120,9 +125,10 @@ class ViewBase(Widget, DisplayableContainer):  # pylint: disable=too-many-instan
                     populate_hints(value, key)
                 else:
                     text = value
-                    if text.startswith('hint') or text.startswith('chain hint'):
+                    if text.startswith("hint") or text.startswith("chain hint"):
                         continue
                     hints.append((key, text))
+
         populate_hints(self.fm.ui.keybuffer.pointer)
 
         def sort_hints(hints):
@@ -142,18 +148,18 @@ class ViewBase(Widget, DisplayableContainer):  # pylint: disable=too-many-instan
                 def action_string(hint):
                     return hint[1]
 
-                return (sorted(group, key=action_string)
-                        for _, group
-                        in groupby(
-                            hints,
-                            key=first_key))
+                return (
+                    sorted(group, key=action_string) for _, group in groupby(hints, key=first_key)
+                )
 
             grouped_hints = group_hints(hints)
 
             # If there are too many hints, collapse the sublists.
             if len(hints) > self.fm.settings.hint_collapse_threshold:
+
                 def first_key_in_group(group):
                     return group[0][0][0]
+
                 grouped_hints = (
                     [(first_key_in_group(hint_group), "...")]
                     if len(hint_group) > 1
@@ -166,7 +172,9 @@ class ViewBase(Widget, DisplayableContainer):  # pylint: disable=too-many-instan
 
             def flatten(nested_list):
                 return [item for inner_list in nested_list for item in inner_list]
+
             return flatten(grouped_hints)
+
         hints = sort_hints(hints)
 
         hei = min(self.hei - 1, len(hints))

@@ -1,7 +1,7 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import re
 
@@ -14,7 +14,8 @@ if not PY3:
     CONTROL_CHARACTERS = set(chr(n) for n in CONTROL_CHARACTERS)
 
 # Don't even try to preview files which match this regular expression:
-PREVIEW_BLACKLIST = re.compile(r"""
+PREVIEW_BLACKLIST = re.compile(
+    r"""
         # look at the extension:
         \.(
             # one character extensions:
@@ -30,17 +31,22 @@ PREVIEW_BLACKLIST = re.compile(r"""
         # ignore fully numerical file extensions:
             (\.\d+)*?
         $
-""", re.VERBOSE | re.IGNORECASE)  # pylint: disable=no-member
+""",
+    re.VERBOSE | re.IGNORECASE,
+)  # pylint: disable=no-member
 
 # Preview these files (almost) always:
-PREVIEW_WHITELIST = re.compile(r"""
+PREVIEW_WHITELIST = re.compile(
+    r"""
         \.(
             txt | py | c
         )
         # ignore filetype-independent suffixes:
             (\.part|\.bak|~)?
         $
-""", re.VERBOSE | re.IGNORECASE)  # pylint: disable=no-member
+""",
+    re.VERBOSE | re.IGNORECASE,
+)  # pylint: disable=no-member
 
 
 class File(FileSystemObject):
@@ -55,7 +61,7 @@ class File(FileSystemObject):
         if self._firstbytes is not None:
             return self._firstbytes
         try:
-            with open(self.path, 'rb') as fobj:
+            with open(self.path, "rb") as fobj:
                 self._firstbytes = set(fobj.read(N_FIRST_BYTES))
         # IOError for Python2, OSError for Python3
         except (IOError, OSError):
@@ -74,11 +80,9 @@ class File(FileSystemObject):
             return False
         if not self.accessible:
             return False
-        if self.fm.settings.preview_max_size and \
-                self.size > self.fm.settings.preview_max_size:
+        if self.fm.settings.preview_max_size and self.size > self.fm.settings.preview_max_size:
             return False
-        if self.fm.settings.preview_script and \
-                self.fm.settings.use_preview_script:
+        if self.fm.settings.preview_script and self.fm.settings.use_preview_script:
             return True
         if self.container:
             return False
@@ -86,7 +90,7 @@ class File(FileSystemObject):
             return True
         if PREVIEW_BLACKLIST.search(self.basename):
             return False
-        if self.path == '/dev/core' or self.path == '/proc/kcore':
+        if self.path == "/dev/core" or self.path == "/proc/kcore":
             return False
         if self.is_binary():
             return False
@@ -97,7 +101,7 @@ class File(FileSystemObject):
 
     def is_image_preview(self):
         try:
-            return self.fm.previews[self.realpath]['imagepreview']
+            return self.fm.previews[self.realpath]["imagepreview"]
         except KeyError:
             return False
 

@@ -1,14 +1,26 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
-from ranger_async.gui.colorscheme import ColorScheme
 from ranger_async.gui.color import (
-    black, blue, cyan, green, magenta, red, white, yellow, default,
-    normal, bold, reverse, dim, BRIGHT,
+    BRIGHT,
+    black,
+    blue,
+    bold,
+    cyan,
+    default,
     default_colors,
+    dim,
+    green,
+    magenta,
+    normal,
+    red,
+    reverse,
+    white,
+    yellow,
 )
+from ranger_async.gui.colorscheme import ColorScheme
 
 
 class Default(ColorScheme):
@@ -40,9 +52,9 @@ class Default(ColorScheme):
                 attr |= bold
                 fg = blue
                 fg += BRIGHT
-            elif context.executable and not \
-                    any((context.media, context.container,
-                         context.fifo, context.socket)):
+            elif context.executable and not any(
+                (context.media, context.container, context.fifo, context.socket)
+            ):
                 attr |= bold
                 fg = green
                 fg += BRIGHT

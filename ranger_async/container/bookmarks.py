@@ -1,11 +1,11 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
-import string
-import re
 import os
+import re
+import string
 
 from ranger_async.core.shared import FileManagerAware
 
@@ -28,8 +28,7 @@ class Bookmarks(FileManagerAware):
     autosave = True
     load_pattern = re.compile(r"^[\d\w']:.")
 
-    def __init__(self, bookmarkfile, bookmarktype=str, autosave=False,
-                 nonpersistent_bookmarks=()):
+    def __init__(self, bookmarkfile, bookmarktype=str, autosave=False, nonpersistent_bookmarks=()):
         """Initializes Bookmarks.
 
         <bookmarkfile> specifies the path to the file where
@@ -73,7 +72,7 @@ class Bookmarks(FileManagerAware):
 
     def __delitem__(self, key):
         """Delete the bookmark with the given key"""
-        if key == '`':
+        if key == "`":
             key = "'"
         if key in self.dct:
             del self.dct[key]
@@ -85,7 +84,7 @@ class Bookmarks(FileManagerAware):
 
     def __getitem__(self, key):
         """Get the bookmark associated with the key"""
-        if key == '`':
+        if key == "`":
             key = "'"
         if key in self.dct:
             value = self.dct[key]
@@ -102,7 +101,7 @@ class Bookmarks(FileManagerAware):
         key is expected to be a 1-character string and element of ALLOWED_KEYS.
         value is expected to be a filesystemobject.
         """
-        if key == '`':
+        if key == "`":
             key = "'"
         if key in ALLOWED_KEYS:
             self.dct[key] = value
@@ -122,7 +121,7 @@ class Bookmarks(FileManagerAware):
                 self.dct[key] = file_new
                 changed = True
             elif bfile.path.startswith(path_old + os.path.sep):
-                self.dct[key] = self.bookmarktype(file_new.path + bfile.path[len(path_old):])
+                self.dct[key] = self.bookmarktype(file_new.path + bfile.path[len(path_old) :])
                 changed = True
         if changed:
             self.save()
@@ -156,12 +155,12 @@ class Bookmarks(FileManagerAware):
 
             # determine if there have been changes
             if current == original and current != real:
-                continue   # another ranger-async instance has changed the bookmark
+                continue  # another ranger-async instance has changed the bookmark
 
             if key not in self.dct:
-                del real_dict[key]   # the user has deleted it
+                del real_dict[key]  # the user has deleted it
             else:
-                real_dict[key] = current   # the user has changed it
+                real_dict[key] = current  # the user has changed it
 
         self._set_dict(real_dict, original=real_dict_copy)
 
@@ -173,15 +172,18 @@ class Bookmarks(FileManagerAware):
         if self.path is None:
             return
 
-        path_new = self.path + '.new'
+        path_new = self.path + ".new"
         try:
-            fobj = open(path_new, 'w')
+            fobj = open(path_new, "w")
         except OSError as ex:
-            self.fm.notify('Bookmarks error: {0}'.format(str(ex)), bad=True)
+            self.fm.notify("Bookmarks error: {0}".format(str(ex)), bad=True)
             return
         for key, value in self.dct.items():
-            if isinstance(key, str) and key in ALLOWED_KEYS \
-                    and key not in self.nonpersistent_bookmarks:
+            if (
+                isinstance(key, str)
+                and key in ALLOWED_KEYS
+                and key not in self.nonpersistent_bookmarks
+            ):
                 fobj.write("{0}:{1}\n".format(str(key), str(value)))
         fobj.close()
 
@@ -197,7 +199,7 @@ class Bookmarks(FileManagerAware):
                 os.rename(path_new, self.path)
 
         except OSError as ex:
-            self.fm.notify('Bookmarks error: {0}'.format(str(ex)), bad=True)
+            self.fm.notify("Bookmarks error: {0}".format(str(ex)), bad=True)
             return
 
         self._update_mtime()
@@ -218,16 +220,16 @@ class Bookmarks(FileManagerAware):
 
         if not os.path.exists(self.path):
             try:
-                with open(self.path, 'w') as fobj:
+                with open(self.path, "w") as fobj:
                     pass
             except OSError as ex:
-                self.fm.notify('Bookmarks error: {0}'.format(str(ex)), bad=True)
+                self.fm.notify("Bookmarks error: {0}".format(str(ex)), bad=True)
                 return None
 
         try:
-            fobj = open(self.path, 'r')
+            fobj = open(self.path, "r")
         except OSError as ex:
-            self.fm.notify('Bookmarks error: {0}'.format(str(ex)), bad=True)
+            self.fm.notify("Bookmarks error: {0}".format(str(ex)), bad=True)
             return None
         dct = {}
         for line in fobj:

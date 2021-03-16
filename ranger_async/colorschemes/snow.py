@@ -1,14 +1,13 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
+from ranger_async.gui.color import BRIGHT, bold, default_colors, reverse
 from ranger_async.gui.colorscheme import ColorScheme
-from ranger_async.gui.color import default_colors, reverse, bold, BRIGHT
 
 
 class Snow(ColorScheme):
-
     def use(self, context):
         fg, bg, attr = default_colors
 

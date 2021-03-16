@@ -1,4 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import operator
 
@@ -24,14 +24,31 @@ def test_basename_natural1():
     fsos = [
         create_filesystem_object(path)
         for path in (
-            "0", "1", "2", "3",
-            "10", "11", "12", "13",
-            "100", "101", "102", "103",
-            "110", "111", "112", "113",
+            "0",
+            "1",
+            "2",
+            "3",
+            "10",
+            "11",
+            "12",
+            "13",
+            "100",
+            "101",
+            "102",
+            "103",
+            "110",
+            "111",
+            "112",
+            "113",
             "hello",
-            "hello1", "hello2",
-            "hello11", "hello12",
-            "hello100", "hello101", "hello111", "hello112",
+            "hello1",
+            "hello2",
+            "hello11",
+            "hello12",
+            "hello100",
+            "hello101",
+            "hello111",
+            "hello112",
         )
     ]
     assert fsos == sorted(fsos[::-1], key=operator.attrgetter("basename_natural"))
@@ -43,11 +60,21 @@ def test_basename_natural2():
     fsos = [
         create_filesystem_object(path)
         for path in (
-            "hello", "hello.txt",
-            "hello0.txt", "hello1.txt", "hello2.txt", "hello3.txt"
-            "hello10.txt", "hello11.txt", "hello12.txt", "hello13.txt"
-            "hello100.txt", "hello101.txt", "hello102.txt", "hello103.txt"
-            "hello110.txt", "hello111.txt", "hello112.txt", "hello113.txt"
+            "hello",
+            "hello.txt",
+            "hello0.txt",
+            "hello1.txt",
+            "hello2.txt",
+            "hello3.txt" "hello10.txt",
+            "hello11.txt",
+            "hello12.txt",
+            "hello13.txt" "hello100.txt",
+            "hello101.txt",
+            "hello102.txt",
+            "hello103.txt" "hello110.txt",
+            "hello111.txt",
+            "hello112.txt",
+            "hello113.txt",
         )
     ]
     assert fsos == sorted(fsos[::-1], key=operator.attrgetter("basename_natural"))

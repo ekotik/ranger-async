@@ -1,4 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import logging
 from collections import deque
@@ -27,10 +27,10 @@ class QueueHandler(logging.Handler):
 
 
 QUEUE = deque(maxlen=1000)
-FMT_NORMAL = logging.Formatter(
-    fmt='%(asctime)s %(levelname).4s %(message)s', datefmt='%H:%M:%S')
+FMT_NORMAL = logging.Formatter(fmt="%(asctime)s %(levelname).4s %(message)s", datefmt="%H:%M:%S")
 FMT_DEBUG = logging.Formatter(
-    fmt='%(asctime)s.%(msecs)03d %(levelname).4s [%(name)s] %(message)s', datefmt='%H:%M:%S')
+    fmt="%(asctime)s.%(msecs)03d %(levelname).4s [%(name)s] %(message)s", datefmt="%H:%M:%S"
+)
 
 
 def setup_logging(debug=True, logfile=None):
@@ -62,7 +62,7 @@ def setup_logging(debug=True, logfile=None):
     handlers = []
     handlers.append(QueueHandler(QUEUE))
     if logfile:
-        if logfile == '-':
+        if logfile == "-":
             handlers.append(logging.StreamHandler())
         else:
             handlers.append(logging.FileHandler(logfile))

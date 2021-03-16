@@ -4,23 +4,23 @@
 
 """A library to help to convert ANSI codes to curses instructions."""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import re
 
 from ranger_async.ext.widestring import WideString
 from ranger_async.gui import color
 
-
 # pylint: disable=invalid-name
-ansi_re = re.compile('(\x1b' + r'\[\d*(?:;\d+)*?[a-zA-Z])')
-codesplit_re = re.compile(r'38;5;(\d+);|48;5;(\d+);|(\d*);')
-reset = '\x1b[0m'
+ansi_re = re.compile("(\x1b" + r"\[\d*(?:;\d+)*?[a-zA-Z])")
+codesplit_re = re.compile(r"38;5;(\d+);|48;5;(\d+);|(\d*);")
+reset = "\x1b[0m"
 # pylint: enable=invalid-name
 
 
 def split_ansi_from_text(ansi_text):
     return ansi_re.split(ansi_text)
+
 
 # For information on the ANSI codes see
 # githttp://en.wikipedia.org/wiki/ANSI_escape_code
@@ -29,36 +29,36 @@ def split_ansi_from_text(ansi_text):
 def text_with_fg_bg_attr(ansi_text):  # pylint: disable=too-many-branches,too-many-statements
     fg, bg, attr = -1, -1, 0
     for chunk in split_ansi_from_text(ansi_text):
-        if chunk and chunk[0] == '\x1b':
-            if chunk[-1] != 'm':
+        if chunk and chunk[0] == "\x1b":
+            if chunk[-1] != "m":
                 continue
-            match = re.match(r'^.\[(.*).$', chunk)
+            match = re.match(r"^.\[(.*).$", chunk)
             if not match:
                 # XXX I have no test case to determine what should happen here
                 continue
             attr_args = match.group(1)
 
             # Convert arguments to attributes/colors
-            for x256fg, x256bg, arg in codesplit_re.findall(attr_args + ';'):
+            for x256fg, x256bg, arg in codesplit_re.findall(attr_args + ";"):
                 # first handle xterm256 codes
                 try:
-                    if x256fg:       # xterm256 foreground
+                    if x256fg:  # xterm256 foreground
                         fg = int(x256fg)
                         continue
-                    elif x256bg:     # xterm256 background
+                    elif x256bg:  # xterm256 background
                         bg = int(x256bg)
                         continue
-                    elif arg:        # usual ansi code
+                    elif arg:  # usual ansi code
                         n = int(arg)
-                    else:            # empty code means reset
+                    else:  # empty code means reset
                         n = 0
                 except ValueError:
                     continue
 
-                if n == 0:           # reset colors and attributes
+                if n == 0:  # reset colors and attributes
                     fg, bg, attr = -1, -1, 0
 
-                elif n == 1:         # enable attribute
+                elif n == 1:  # enable attribute
                     attr |= color.bold
                 elif n == 4:
                     attr |= color.underline
@@ -69,7 +69,7 @@ def text_with_fg_bg_attr(ansi_text):  # pylint: disable=too-many-branches,too-ma
                 elif n == 8:
                     attr |= color.invisible
 
-                elif n == 22:        # disable attribute
+                elif n == 22:  # disable attribute
                     attr &= not color.bold
                 elif n == 24:
                     attr &= not color.underline
@@ -119,7 +119,7 @@ def char_len(ansi_text):
     >>> char_len("")
     0
     """
-    return len(WideString(ansi_re.sub('', ansi_text)))
+    return len(WideString(ansi_re.sub("", ansi_text)))
 
 
 def char_slice(ansi_text, start, length):
@@ -161,19 +161,20 @@ def char_slice(ansi_text, start, length):
             pass  # seek
         elif old_pos < start <= pos:
             chunks.append(last_color)
-            chunks.append(str(chunk[start - old_pos:start - old_pos + length]))
+            chunks.append(str(chunk[start - old_pos : start - old_pos + length]))
         elif pos > length + start:
             chunks.append(last_color)
-            chunks.append(str(chunk[:start - old_pos + length]))
+            chunks.append(str(chunk[: start - old_pos + length]))
         else:
             chunks.append(last_color)
             chunks.append(str(chunk))
         if pos - start >= length:
             break
-    return ''.join(chunks)
+    return "".join(chunks)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
     import sys
+
     sys.exit(doctest.testmod()[0])

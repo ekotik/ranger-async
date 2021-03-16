@@ -3,7 +3,7 @@
 
 """VCS module"""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import os
 import subprocess
@@ -41,44 +41,44 @@ class Vcs(object):  # pylint: disable=too-many-instance-attributes
     # the current head and nothing. Every backend should redefine them if the
     # version control has a similar concept, or implement _sanitize_rev method to
     # clean the rev before using them
-    INDEX = 'INDEX'
-    HEAD = 'HEAD'
-    NONE = 'NONE'
+    INDEX = "INDEX"
+    HEAD = "HEAD"
+    NONE = "NONE"
 
     # Backends
     REPOTYPES = {
-        'bzr': {'class': 'Bzr', 'setting': 'vcs_backend_bzr'},
-        'git': {'class': 'Git', 'setting': 'vcs_backend_git'},
-        'hg': {'class': 'Hg', 'setting': 'vcs_backend_hg'},
-        'svn': {'class': 'SVN', 'setting': 'vcs_backend_svn'},
+        "bzr": {"class": "Bzr", "setting": "vcs_backend_bzr"},
+        "git": {"class": "Git", "setting": "vcs_backend_git"},
+        "hg": {"class": "Hg", "setting": "vcs_backend_hg"},
+        "svn": {"class": "SVN", "setting": "vcs_backend_svn"},
     }
 
     # Possible directory statuses in order of importance
     # statuses that should not be inherited from subpaths are disabled
     DIRSTATUSES = (
-        'conflict',
-        'untracked',
-        'deleted',
-        'changed',
-        'staged',
+        "conflict",
+        "untracked",
+        "deleted",
+        "changed",
+        "staged",
         # 'ignored',
-        'sync',
+        "sync",
         # 'none',
-        'unknown',
+        "unknown",
     )
 
     def __init__(self, dirobj):
         self.obj = dirobj
         self.path = dirobj.path
         self.repotypes_settings = set(
-            repotype for repotype, values in self.REPOTYPES.items()
-            if getattr(dirobj.settings, values['setting']) in ('enabled', 'local')
+            repotype
+            for repotype, values in self.REPOTYPES.items()
+            if getattr(dirobj.settings, values["setting"]) in ("enabled", "local")
         )
 
         self.root, self.repodir, self.repotype, self.links = self._find_root(self.path)
         self.is_root = self.obj.path == self.root
-        self.is_root_link = (
-            self.obj.is_link and self.obj.realpath == self.root)
+        self.is_root_link = self.obj.is_link and self.obj.realpath == self.root
         self.is_root_pointer = self.is_root or self.is_root_link
         self.in_repodir = False
         self.rootvcs = None
@@ -87,11 +87,11 @@ class Vcs(object):  # pylint: disable=too-many-instance-attributes
         if self.root:
             if self.is_root:
                 self.rootvcs = self
-                self.__class__ = globals()[self.REPOTYPES[self.repotype]['class'] + 'Root']
+                self.__class__ = globals()[self.REPOTYPES[self.repotype]["class"] + "Root"]
 
                 if not os.access(self.repodir, os.R_OK):
-                    self.obj.vcsremotestatus = 'unknown'
-                    self.obj.vcsstatus = 'unknown'
+                    self.obj.vcsremotestatus = "unknown"
+                    self.obj.vcsstatus = "unknown"
                     return
 
                 self.track = True
@@ -100,21 +100,27 @@ class Vcs(object):  # pylint: disable=too-many-instance-attributes
                 if self.rootvcs is None or self.rootvcs.root is None:
                     return
                 self.rootvcs.links |= self.links
-                self.__class__ = globals()[self.REPOTYPES[self.repotype]['class']]
+                self.__class__ = globals()[self.REPOTYPES[self.repotype]["class"]]
                 self.track = self.rootvcs.track
 
-                if self.path == self.repodir or self.path.startswith(self.repodir + '/'):
+                if self.path == self.repodir or self.path.startswith(self.repodir + "/"):
                     self.in_repodir = True
                     self.track = False
 
     # Generic
 
-    def _run(self, args, path=None,  # pylint: disable=too-many-arguments
-             catchout=True, retbytes=False, rstrip_newline=True):
+    def _run(
+        self,
+        args,
+        path=None,  # pylint: disable=too-many-arguments
+        catchout=True,
+        retbytes=False,
+        rstrip_newline=True,
+    ):
         """Run a command"""
-        if self.repotype == 'hg':
+        if self.repotype == "hg":
             # use "chg", a faster built-in client
-            cmd = ['chg'] + args
+            cmd = ["chg"] + args
         else:
             cmd = [self.repotype] + args
         if path is None:
@@ -123,20 +129,20 @@ class Vcs(object):  # pylint: disable=too-many-instance-attributes
         try:
             if catchout:
                 output = spawn.check_output(cmd, cwd=path, decode=not retbytes)
-                if not retbytes and rstrip_newline and output.endswith('\n'):
+                if not retbytes and rstrip_newline and output.endswith("\n"):
                     return output[:-1]
                 return output
             else:
-                with open(os.devnull, mode='w') as fd_devnull:
+                with open(os.devnull, mode="w") as fd_devnull:
                     subprocess.check_call(cmd, cwd=path, stdout=fd_devnull, stderr=fd_devnull)
                 return None
         except (subprocess.CalledProcessError, OSError):
-            raise VcsError('{0:s}: {1:s}'.format(str(cmd), path))
+            raise VcsError("{0:s}: {1:s}".format(str(cmd), path))
 
     def _get_repotype(self, path):
         """Get type for path"""
         for repotype in self.repotypes_settings:
-            repodir = os.path.join(path, '.' + repotype)
+            repodir = os.path.join(path, "." + repotype)
             if os.path.exists(repodir):
                 return (repodir, repotype)
         return (None, None)
@@ -165,9 +171,11 @@ class Vcs(object):  # pylint: disable=too-many-instance-attributes
     def reinit(self):
         """Reinit"""
         if not self.in_repodir:
-            if not self.track \
-                    or (not self.is_root_pointer and self._get_repotype(self.obj.realpath)[0]) \
-                    or not os.path.exists(self.repodir):
+            if (
+                not self.track
+                or (not self.is_root_pointer and self._get_repotype(self.obj.realpath)[0])
+                or not os.path.exists(self.repodir)
+            ):
                 self.__init__(self.obj)
 
     # Action interface
@@ -211,6 +219,7 @@ class Vcs(object):  # pylint: disable=too-many-instance-attributes
 
 class VcsRoot(Vcs):  # pylint: disable=abstract-method
     """Vcs root"""
+
     rootinit = False
     head = None
     branch = None
@@ -220,13 +229,13 @@ class VcsRoot(Vcs):  # pylint: disable=abstract-method
     def _status_root(self):
         """Returns root status"""
         if self.status_subpaths is None:
-            return 'none'
+            return "none"
 
         statuses = set(status for path, status in self.status_subpaths.items())
         for status in self.DIRSTATUSES:
             if status in statuses:
                 return status
-        return 'sync'
+        return "sync"
 
     def init_root(self):
         """Initialize root cheaply"""
@@ -236,7 +245,7 @@ class VcsRoot(Vcs):  # pylint: disable=abstract-method
             self.obj.vcsremotestatus = self.data_status_remote()
             self.obj.vcsstatus = self.data_status_root()
         except VcsError as ex:
-            self.obj.fm.notify('VCS Exception: View log for more info', bad=True, exception=ex)
+            self.obj.fm.notify("VCS Exception: View log for more info", bad=True, exception=ex)
             return False
         self.rootinit = True
         return True
@@ -250,7 +259,7 @@ class VcsRoot(Vcs):  # pylint: disable=abstract-method
             self.obj.vcsremotestatus = self.data_status_remote()
             self.obj.vcsstatus = self._status_root()
         except VcsError as ex:
-            self.obj.fm.notify('VCS Exception: View log for more info', bad=True, exception=ex)
+            self.obj.fm.notify("VCS Exception: View log for more info", bad=True, exception=ex)
             return False
         self.rootinit = True
         self.updatetime = time.time()
@@ -293,7 +302,8 @@ class VcsRoot(Vcs):  # pylint: disable=abstract-method
                             )
                     else:
                         fsobj.vcsstatus = self.status_subpath(
-                            os.path.join(wrootobj.realpath, fsobj.basename))
+                            os.path.join(wrootobj.realpath, fsobj.basename)
+                        )
                 wrootobj.has_vcschild = has_vcschild
 
             # Remove dead directories
@@ -352,7 +362,7 @@ class VcsRoot(Vcs):  # pylint: disable=abstract-method
         path needs to be self.obj.path or subpath thereof
         """
         if self.status_subpaths is None:
-            return 'none'
+            return "none"
 
         relpath = os.path.relpath(path, self.path)
 
@@ -365,12 +375,15 @@ class VcsRoot(Vcs):  # pylint: disable=abstract-method
 
         # check if path contains some file in status
         if is_directory:
-            statuses = set(status for subpath, status in self.status_subpaths.items()
-                           if subpath.startswith(relpath + '/'))
+            statuses = set(
+                status
+                for subpath, status in self.status_subpaths.items()
+                if subpath.startswith(relpath + "/")
+            )
             for status in self.DIRSTATUSES:
                 if status in statuses:
                     return status
-        return 'sync'
+        return "sync"
 
 
 class VcsThread(threading.Thread):  # pylint: disable=too-many-instance-attributes
@@ -479,7 +492,7 @@ class VcsThread(threading.Thread):  # pylint: disable=too-many-instance-attribut
                     self._ui.status.need_redraw = True
                     self._ui.redraw()
             except Exception as ex:  # pylint: disable=broad-except
-                self._ui.fm.notify('VCS Exception: View log for more info', bad=True, exception=ex)
+                self._ui.fm.notify("VCS Exception: View log for more info", bad=True, exception=ex)
 
     def stop(self):
         """Stop thread synchronously"""

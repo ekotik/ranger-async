@@ -1,27 +1,28 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
-from collections import deque
-from subprocess import Popen, PIPE
-from time import time, sleep
+import errno
 import math
 import os.path
 import select
-import errno
+from collections import deque
+from subprocess import PIPE, Popen
+from time import sleep, time
 
 try:
     import chardet  # pylint: disable=import-error
+
     HAVE_CHARDET = True
 except ImportError:
     HAVE_CHARDET = False
 
 from ranger_async import PY3
 from ranger_async.core.shared import FileManagerAware
+from ranger_async.ext.human_readable import human_readable
 from ranger_async.ext.safe_path import get_safe_path
 from ranger_async.ext.signals import SignalDispatcher
-from ranger_async.ext.human_readable import human_readable
 
 
 class Loadable(object):
@@ -52,8 +53,9 @@ class Loadable(object):
 class CopyLoader(Loadable, FileManagerAware):  # pylint: disable=too-many-instance-attributes
     progressbar_supported = True
 
-    def __init__(self, copy_buffer, do_cut=False, overwrite=False, dest=None,
-                 make_safe_path=get_safe_path):
+    def __init__(
+        self, copy_buffer, do_cut=False, overwrite=False, dest=None, make_safe_path=get_safe_path
+    ):
         self.copy_buffer = tuple(copy_buffer)
         self.do_cut = do_cut
         self.original_copy_buffer = copy_buffer
@@ -63,10 +65,11 @@ class CopyLoader(Loadable, FileManagerAware):  # pylint: disable=too-many-instan
         self.percent = 0
         if self.copy_buffer:
             self.one_file = self.copy_buffer[0]
-        Loadable.__init__(self, self.generate(), 'Calculating size...')
+        Loadable.__init__(self, self.generate(), "Calculating size...")
 
     def _calculate_size(self, step):
         from os.path import join
+
         size = 0
         stack = [fobj.path for fobj in self.copy_buffer]
         while stack:
@@ -88,6 +91,7 @@ class CopyLoader(Loadable, FileManagerAware):  # pylint: disable=too-many-instan
             return
 
         from ranger_async.ext import shutil_generatorized as shutil_g
+
         # TODO: Don't calculate size when renaming (needs detection)
         bytes_per_tick = shutil_g.BLOCK_SIZE
         size = max(1, self._calculate_size(bytes_per_tick))
@@ -105,15 +109,18 @@ class CopyLoader(Loadable, FileManagerAware):  # pylint: disable=too-many-instan
                         tag = self.fm.tags.tags[path]
                         self.fm.tags.remove(path)
                         new_path = path.replace(
-                            fobj.path,
-                            os.path.join(self.original_path, fobj.basename))
+                            fobj.path, os.path.join(self.original_path, fobj.basename)
+                        )
                         self.fm.tags.tags[new_path] = tag
                         self.fm.tags.dump()
                 n = 0
-                for n in shutil_g.move(src=fobj.path, dst=self.original_path,
-                                       overwrite=self.overwrite,
-                                       make_safe_path=self.make_safe_path):
-                    self.percent = ((done + n) / size) * 100.
+                for n in shutil_g.move(
+                    src=fobj.path,
+                    dst=self.original_path,
+                    overwrite=self.overwrite,
+                    make_safe_path=self.make_safe_path,
+                ):
+                    self.percent = ((done + n) / size) * 100.0
                     yield
                 done += n
         else:
@@ -125,21 +132,25 @@ class CopyLoader(Loadable, FileManagerAware):  # pylint: disable=too-many-instan
                 if os.path.isdir(fobj.path) and not os.path.islink(fobj.path):
                     n = 0
                     for n in shutil_g.copytree(
-                            src=fobj.path,
-                            dst=os.path.join(self.original_path, fobj.basename),
-                            symlinks=True,
-                            overwrite=self.overwrite,
-                            make_safe_path=self.make_safe_path,
+                        src=fobj.path,
+                        dst=os.path.join(self.original_path, fobj.basename),
+                        symlinks=True,
+                        overwrite=self.overwrite,
+                        make_safe_path=self.make_safe_path,
                     ):
-                        self.percent = ((done + n) / size) * 100.
+                        self.percent = ((done + n) / size) * 100.0
                         yield
                     done += n
                 else:
                     n = 0
-                    for n in shutil_g.copy2(fobj.path, self.original_path,
-                                            symlinks=True, overwrite=self.overwrite,
-                                            make_safe_path=self.make_safe_path):
-                        self.percent = ((done + n) / size) * 100.
+                    for n in shutil_g.copy2(
+                        fobj.path,
+                        self.original_path,
+                        symlinks=True,
+                        overwrite=self.overwrite,
+                        make_safe_path=self.make_safe_path,
+                    ):
+                        self.percent = ((done + n) / size) * 100.0
                         yield
                     done += n
         cwd = self.fm.get_directory(self.original_path)
@@ -147,19 +158,28 @@ class CopyLoader(Loadable, FileManagerAware):  # pylint: disable=too-many-instan
 
 
 class CommandLoader(  # pylint: disable=too-many-instance-attributes
-        Loadable, SignalDispatcher, FileManagerAware):
+    Loadable, SignalDispatcher, FileManagerAware
+):
     """Run an external command with the loader.
 
     Output from stderr will be reported.  Ensure that the process doesn't
     ever ask for input, otherwise the loader will be blocked until this
     object is removed from the queue (type ^C in ranger-async)
     """
+
     finished = False
     process = None
 
-    def __init__(self, args, descr,  # pylint: disable=too-many-arguments
-                 silent=False, read=False, input=None,  # pylint: disable=redefined-builtin
-                 kill_on_pause=False, popenArgs=None):
+    def __init__(
+        self,
+        args,
+        descr,  # pylint: disable=too-many-arguments
+        silent=False,
+        read=False,
+        input=None,  # pylint: disable=redefined-builtin
+        kill_on_pause=False,
+        popenArgs=None,
+    ):
         SignalDispatcher.__init__(self)
         Loadable.__init__(self, self.generate(), descr)
         self.args = args
@@ -172,13 +192,14 @@ class CommandLoader(  # pylint: disable=too-many-instance-attributes
 
     def generate(self):  # pylint: disable=too-many-branches,too-many-statements
         popenargs = {} if self.popenArgs is None else self.popenArgs
-        popenargs['stdout'] = popenargs['stderr'] = PIPE
-        popenargs['stdin'] = PIPE if self.input else open(os.devnull, 'r')
+        popenargs["stdout"] = popenargs["stderr"] = PIPE
+        popenargs["stdin"] = PIPE if self.input else open(os.devnull, "r")
         self.process = process = Popen(self.args, **popenargs)
-        self.signal_emit('before', process=process, loader=self)
+        self.signal_emit("before", process=process, loader=self)
         if self.input:
             if PY3:
                 import io
+
                 stdin = io.TextIOWrapper(process.stdin)
             else:
                 stdin = process.stdin
@@ -238,7 +259,7 @@ class CommandLoader(  # pylint: disable=too-many-instance-attributes
                     read_stdout = safe_decode(read_stdout)
                 self.stdout_buffer += read_stdout
         self.finished = True
-        self.signal_emit('after', process=process, loader=self)
+        self.signal_emit("after", process=process, loader=self)
 
     def pause(self):
         if not self.finished and not self.paused:
@@ -256,7 +277,7 @@ class CommandLoader(  # pylint: disable=too-many-instance-attributes
             except OSError:
                 pass
             Loadable.pause(self)
-            self.signal_emit('pause', process=self.process, loader=self)
+            self.signal_emit("pause", process=self.process, loader=self)
 
     def unpause(self):
         if not self.finished and self.paused:
@@ -265,10 +286,10 @@ class CommandLoader(  # pylint: disable=too-many-instance-attributes
             except OSError:
                 pass
             Loadable.unpause(self)
-            self.signal_emit('unpause', process=self.process, loader=self)
+            self.signal_emit("unpause", process=self.process, loader=self)
 
     def destroy(self):
-        self.signal_emit('destroy', process=self.process, loader=self)
+        self.signal_emit("destroy", process=self.process, loader=self)
         if self.process:
             try:
                 self.process.kill()
@@ -283,7 +304,7 @@ def safe_decode(string):
         if HAVE_CHARDET:
             encoding = chardet.detect(string)["encoding"]
             if encoding:
-                return string.decode(encoding, 'ignore')
+                return string.decode(encoding, "ignore")
         return ""
 
 
@@ -291,9 +312,10 @@ class Loader(FileManagerAware):
     """
     The Manager of 'Loadable' objects, referenced as fm.loader
     """
+
     seconds_of_work_time = 0.03
-    throbber_chars = r'/-\|'
-    throbber_paused = '#'
+    throbber_chars = r"/-\|"
+    throbber_paused = "#"
     paused = False
 
     def __init__(self):
@@ -308,8 +330,7 @@ class Loader(FileManagerAware):
     def rotate(self):
         """Rotate the throbber"""
         # TODO: move all throbber logic to UI
-        self.throbber_status = \
-            (self.throbber_status + 1) % len(self.throbber_chars)
+        self.throbber_status = (self.throbber_status + 1) % len(self.throbber_chars)
         self.status = self.throbber_chars[self.throbber_status]
 
     def add(self, obj, append=False):
@@ -361,7 +382,7 @@ class Loader(FileManagerAware):
         if index is not None:
             if item is None:
                 item = self.queue[index]
-            if hasattr(item, 'unload'):
+            if hasattr(item, "unload"):
                 item.unload()
             self.fm.signal_emit("loader.destroy", loadable=item, fm=self.fm)
             item.destroy()
@@ -425,8 +446,9 @@ class Loader(FileManagerAware):
                 break
             except Exception as ex:  # pylint: disable=broad-except
                 self.fm.notify(
-                    'Loader work process failed: {0} (Percent: {1})'.format(
-                        item.description, item.percent),
+                    "Loader work process failed: {0} (Percent: {1})".format(
+                        item.description, item.percent
+                    ),
                     bad=True,
                     exception=ex,
                 )

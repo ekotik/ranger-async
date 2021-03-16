@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-import sys
 
+import sys
 
 MACRO_FAIL = "<\x01\x01MACRO_HAS_NO_VALUE\x01\01>"
 
@@ -77,6 +77,7 @@ class MacroDict(MutableMapping):
         return str(self.__dict__)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
+
     sys.exit(doctest.testmod()[0])

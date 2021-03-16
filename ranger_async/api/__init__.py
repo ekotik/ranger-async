@@ -3,13 +3,12 @@
 
 """Files in this module contain helper functions used in configuration files."""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import ranger_async
 from ranger_async.core.linemode import LinemodeBase
 
-
-__all__ = ['ranger_async', 'LinemodeBase', 'hook_init', 'hook_ready', 'register_linemode']
+__all__ = ["ranger_async", "LinemodeBase", "hook_init", "hook_ready", "register_linemode"]
 
 
 # Hooks for use in plugins:
@@ -43,5 +42,6 @@ def hook_ready(fm):  # pylint: disable=unused-argument
 def register_linemode(linemode_class):
     """Add a custom linemode class.  See ranger_async.core.linemode"""
     from ranger_async.container.fsobject import FileSystemObject
+
     FileSystemObject.linemode_dict[linemode_class.name] = linemode_class()
     return linemode_class

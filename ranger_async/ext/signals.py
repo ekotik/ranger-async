@@ -57,7 +57,7 @@ True
 True
 """
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import weakref
 from types import MethodType
@@ -73,6 +73,7 @@ class Signal(dict):
 
     To delete a signal handler from inside a signal, raise a ReferenceError.
     """
+
     stopped = False
 
     def __init__(self, **keywords):
@@ -93,6 +94,7 @@ class SignalHandler(object):  # pylint: disable=too-few-public-methods
     You can disable a handler without removing it by setting the attribute
     "active" to False.
     """
+
     active = True
 
     def __init__(self, signal_name, function, priority, pass_signal):
@@ -131,8 +133,8 @@ class SignalDispatcher(object):
         passing it to signal_unbind().
         """
         assert isinstance(signal_name, str)
-        assert hasattr(function, '__call__')
-        assert hasattr(function, '__code__')
+        assert hasattr(function, "__call__")
+        assert hasattr(function, "__code__")
         assert isinstance(priority, (int, float))
         assert isinstance(weak, bool)
         try:
@@ -141,7 +143,7 @@ class SignalDispatcher(object):
             handlers = self._signals[signal_name] = []
         nargs = function.__code__.co_argcount
 
-        if getattr(function, '__self__', None):
+        if getattr(function, "__self__", None):
             nargs -= 1
             if weak:
                 function = (function.__func__, weakref.proxy(function.__self__))
@@ -151,8 +153,7 @@ class SignalDispatcher(object):
         handler = SignalHandler(signal_name, function, priority, nargs > 0)
         handlers.append(handler)
         if autosort:
-            handlers.sort(
-                key=lambda handler: -handler.priority)
+            handlers.sort(key=lambda handler: -handler.priority)
         return handler
 
     # TODO: Do we still use this method? Should we remove it?
@@ -164,12 +165,10 @@ class SignalDispatcher(object):
         """
         if signal_name is None:
             for handlers in self._signals.values():
-                handlers.sort(
-                    key=lambda handler: -handler.priority)
+                handlers.sort(key=lambda handler: -handler.priority)
             return None
         elif signal_name in self._signals:
-            self._signals[signal_name].sort(
-                key=lambda handler: -handler.priority)
+            self._signals[signal_name].sort(key=lambda handler: -handler.priority)
             return None
         return False
 
@@ -180,8 +179,7 @@ class SignalDispatcher(object):
         signal_bind().
         """
         try:
-            handlers = self._signals[
-                signal_handler.signal_name]
+            handlers = self._signals[signal_handler.signal_name]
         except KeyError:
             pass
         else:
@@ -276,7 +274,8 @@ class SignalDispatcher(object):
         return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
     import sys
+
     sys.exit(doctest.testmod()[0])

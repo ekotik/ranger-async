@@ -24,17 +24,17 @@ Define which colorscheme in your settings (e.g. ~/.config/ranger-async/rc.conf):
 set colorscheme yourschemename
 """
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import os.path
 from curses import color_pair
 
 import ranger_async
-from ranger_async.gui.color import get_color
-from ranger_async.gui.context import Context
 from ranger_async.core.main import allow_access_to_confdir
 from ranger_async.ext.cached_function import cached_function
 from ranger_async.ext.iter_tools import flatten
+from ranger_async.gui.color import get_color
+from ranger_async.gui.context import Context
 
 
 class ColorSchemeError(Exception):
@@ -58,8 +58,10 @@ class ColorScheme(object):
         context = Context(keys)
         color = self.use(context)
         if len(color) != 3 or not all(isinstance(value, int) for value in color):
-            raise ValueError("Bad Value from colorscheme.  Need "
-                             "a tuple of (foreground_color, background_color, attribute).")
+            raise ValueError(
+                "Bad Value from colorscheme.  Need "
+                "a tuple of (foreground_color, background_color, attribute)."
+            )
         return color
 
     @cached_function
@@ -89,13 +91,13 @@ def _colorscheme_name_to_class(signal):  # pylint: disable=too-many-branches
         return
 
     if not signal.value:
-        signal.value = 'default'
+        signal.value = "default"
 
     scheme_name = signal.value
     usecustom = not ranger_async.args.clean
 
     def exists(colorscheme):
-        return os.path.exists(colorscheme + '.py') or os.path.exists(colorscheme + '.pyc')
+        return os.path.exists(colorscheme + ".py") or os.path.exists(colorscheme + ".pyc")
 
     def is_scheme(cls):
         try:
@@ -105,16 +107,15 @@ def _colorscheme_name_to_class(signal):  # pylint: disable=too-many-branches
 
     # create ~/.config/ranger-async/colorschemes/__init__.py if it doesn't exist
     if usecustom:
-        if os.path.exists(signal.fm.confpath('colorschemes')):
-            initpy = signal.fm.confpath('colorschemes', '__init__.py')
+        if os.path.exists(signal.fm.confpath("colorschemes")):
+            initpy = signal.fm.confpath("colorschemes", "__init__.py")
             if not os.path.exists(initpy):
-                open(initpy, 'a').close()
+                open(initpy, "a").close()
 
-    if usecustom and \
-            exists(signal.fm.confpath('colorschemes', scheme_name)):
-        scheme_supermodule = 'colorschemes'
-    elif exists(signal.fm.relpath('colorschemes', scheme_name)):
-        scheme_supermodule = 'ranger_async.colorschemes'
+    if usecustom and exists(signal.fm.confpath("colorschemes", scheme_name)):
+        scheme_supermodule = "colorschemes"
+    elif exists(signal.fm.relpath("colorschemes", scheme_name)):
+        scheme_supermodule = "ranger_async.colorschemes"
         usecustom = False
     else:
         scheme_supermodule = None  # found no matching file.
@@ -129,10 +130,11 @@ def _colorscheme_name_to_class(signal):  # pylint: disable=too-many-branches
         if usecustom:
             allow_access_to_confdir(ranger_async.args.confdir, True)
         scheme_module = getattr(
-            __import__(scheme_supermodule, globals(), locals(), [scheme_name], 0), scheme_name)
+            __import__(scheme_supermodule, globals(), locals(), [scheme_name], 0), scheme_name
+        )
         if usecustom:
             allow_access_to_confdir(ranger_async.args.confdir, False)
-        if hasattr(scheme_module, 'Scheme') and is_scheme(scheme_module.Scheme):
+        if hasattr(scheme_module, "Scheme") and is_scheme(scheme_module.Scheme):
             signal.value = scheme_module.Scheme()
         else:
             for var in scheme_module.__dict__.values():
@@ -146,13 +148,13 @@ def _colorscheme_name_to_class(signal):  # pylint: disable=too-many-branches
 def get_all_colorschemes(fm):
     colorschemes = set()
     # Load colorscheme names from main ranger-async/colorschemes dir
-    for item in os.listdir(os.path.join(ranger_async.RANGER_ASYNCDIR, 'colorschemes')):
-        if not item.startswith('__'):
-            colorschemes.add(item.rsplit('.', 1)[0])
+    for item in os.listdir(os.path.join(ranger_async.RANGER_ASYNCDIR, "colorschemes")):
+        if not item.startswith("__"):
+            colorschemes.add(item.rsplit(".", 1)[0])
     # Load colorscheme names from ~/.config/ranger-async/colorschemes if dir exists
-    confpath = fm.confpath('colorschemes')
+    confpath = fm.confpath("colorschemes")
     if os.path.isdir(confpath):
         for item in os.listdir(confpath):
-            if not item.startswith('__'):
-                colorschemes.add(item.rsplit('.', 1)[0])
+            if not item.startswith("__"):
+                colorschemes.add(item.rsplit(".", 1)[0])
     return list(sorted(colorschemes))

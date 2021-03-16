@@ -3,15 +3,16 @@
 
 """ViewMiller arranges the view in miller columns"""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import curses
+
 from ranger_async.container import settings
 from ranger_async.gui.widgets.view_base import ViewBase
 
+from ..displayable import DisplayableContainer
 from .browsercolumn import BrowserColumn
 from .pager import Pager
-from ..displayable import DisplayableContainer
 
 
 class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-instance-attributes
@@ -28,13 +29,15 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
 
         self.rebuild()
 
-        for option in ('preview_directories', 'preview_files'):
-            self.settings.signal_bind('setopt.' + option,
-                                      self._request_clear_if_has_borders, weak=True)
+        for option in ("preview_directories", "preview_files"):
+            self.settings.signal_bind(
+                "setopt." + option, self._request_clear_if_has_borders, weak=True
+            )
 
-        self.settings.signal_bind('setopt.column_ratios', self.request_clear)
-        self.settings.signal_bind('setopt.column_ratios', self.rebuild,
-                                  priority=settings.SIGNAL_PRIORITY_AFTER_SYNC)
+        self.settings.signal_bind("setopt.column_ratios", self.request_clear)
+        self.settings.signal_bind(
+            "setopt.column_ratios", self.rebuild, priority=settings.SIGNAL_PRIORITY_AFTER_SYNC
+        )
 
         self.old_draw_borders = self.settings.draw_borders
 
@@ -60,9 +63,10 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
 
         last = 0.1 if self.settings.padding_right else 0
         if len(self.ratios) >= 2:
-            self.stretch_ratios = self.ratios[:-2] + \
-                ((self.ratios[-2] + self.ratios[-1] * 1.0 - last),
-                 (self.ratios[-1] * last))
+            self.stretch_ratios = self.ratios[:-2] + (
+                (self.ratios[-2] + self.ratios[-1] * 1.0 - last),
+                (self.ratios[-1] * last),
+            )
 
         offset = 1 - len(ratios)
         if self.preview:
@@ -100,8 +104,8 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
         DisplayableContainer.draw(self)
         if self.settings.draw_borders:
             draw_borders = self.settings.draw_borders.lower()
-            if draw_borders in ['both', 'true']:   # 'true' for backwards compat.
-                border_types = ['separators', 'outline']
+            if draw_borders in ["both", "true"]:  # 'true' for backwards compat.
+                border_types = ["separators", "outline"]
             else:
                 border_types = [draw_borders]
             self._draw_borders(border_types)
@@ -115,7 +119,7 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
     def _draw_borders(self, border_types):  # pylint: disable=too-many-branches
         win = self.win
 
-        self.color('in_browser', 'border')
+        self.color("in_browser", "border")
 
         left_start = 0
         right_end = self.wid - 1
@@ -135,7 +139,7 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
                 right_end = self.wid - 1
 
         # Draw horizontal lines and the leftmost vertical line
-        if 'outline' in border_types:
+        if "outline" in border_types:
             try:
                 # pylint: disable=no-member
                 win.hline(0, left_start, curses.ACS_HLINE, right_end - left_start)
@@ -146,7 +150,7 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
                 pass
 
         # Draw the vertical lines in the middle
-        if 'separators' in border_types:
+        if "separators" in border_types:
             for child in self.columns[:-1]:
                 if not child.has_preview():
                     continue
@@ -159,7 +163,7 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
                 try:
                     # pylint: disable=no-member
                     win.vline(1, x, curses.ACS_VLINE, y - 1)
-                    if 'outline' in border_types:
+                    if "outline" in border_types:
                         self.addch(0, x, curses.ACS_TTEE, 0)
                         self.addch(y, x, curses.ACS_BTEE, 0)
                     else:
@@ -170,7 +174,7 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
                     # in case it's off the boundaries
                     pass
 
-        if 'outline' in border_types:
+        if "outline" in border_types:
             # Draw the last vertical line
             try:
                 # pylint: disable=no-member
@@ -179,7 +183,7 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
             except curses.error:
                 pass
 
-        if 'outline' in border_types:
+        if "outline" in border_types:
             # pylint: disable=no-member
             self.addch(0, left_start, curses.ACS_ULCORNER)
             self.addch(self.hei - 1, left_start, curses.ACS_LLCORNER)
@@ -189,16 +193,14 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
 
     def _collapse(self):
         # Should the last column be cut off? (Because there is no preview)
-        if not self.settings.collapse_preview or not self.preview \
-                or not self.stretch_ratios:
+        if not self.settings.collapse_preview or not self.preview or not self.stretch_ratios:
             return False
         result = not self.columns[-1].has_preview()
         target = self.columns[-1].target
         if not result and target and target.is_file:
-            if self.fm.settings.preview_script and \
-                    self.fm.settings.use_preview_script:
+            if self.fm.settings.preview_script and self.fm.settings.use_preview_script:
                 try:
-                    result = not self.fm.previews[target.realpath]['foundpreview']
+                    result = not self.fm.previews[target.realpath]["foundpreview"]
                 except KeyError:
                     return self.old_collapse
 
@@ -210,7 +212,7 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
         ViewBase.resize(self, y, x, hei, wid)
 
         border_type = self.settings.draw_borders.lower()
-        if border_type in ['outline', 'both', 'true']:
+        if border_type in ["outline", "both", "true"]:
             pad = 1
         else:
             pad = 0
@@ -276,8 +278,11 @@ class ViewMiller(ViewBase):  # pylint: disable=too-many-ancestors,too-many-insta
 
         # Show the preview column when it has a preview but has
         # been hidden (e.g. because of padding_right = False)
-        if not self.columns[-1].visible and self.columns[-1].has_preview() \
-                and not self.pager.visible:
+        if (
+            not self.columns[-1].visible
+            and self.columns[-1].has_preview()
+            and not self.pager.visible
+        ):
             self.columns[-1].visible = True
 
         if self.preview and self.is_collapsed != self._collapse():

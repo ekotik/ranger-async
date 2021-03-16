@@ -18,21 +18,20 @@ has been defined.
 False
 """
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import math
 
 
 class Direction(dict):
-
     def __init__(self, dictionary=None, **keywords):
         if dictionary is not None:
             dict.__init__(self, dictionary)
         else:
             dict.__init__(self, keywords)
-        if 'to' in self:
-            self['down'] = self['to']
-            self['absolute'] = True
+        if "to" in self:
+            self["down"] = self["to"]
+            self["absolute"] = True
 
     def copy(self):
         return Direction(**self)
@@ -59,13 +58,13 @@ class Direction(dict):
         return -Direction.down(self)  # pylint: disable=invalid-unary-operand-type
 
     def down(self):
-        return Direction._get_direction(self, 'down', 'up')
+        return Direction._get_direction(self, "down", "up")
 
     def right(self):
-        return Direction._get_direction(self, 'right', 'left')
+        return Direction._get_direction(self, "right", "left")
 
     def absolute(self):
-        return Direction._get_bool(self, 'absolute', 'relative')
+        return Direction._get_bool(self, "absolute", "relative")
 
     def left(self):
         return -Direction.right(self)  # pylint: disable=invalid-unary-operand-type
@@ -82,38 +81,45 @@ class Direction(dict):
         return (right > 0) - (right < 0)
 
     def vertical(self):
-        return set(self) & set(['up', 'down'])
+        return set(self) & set(["up", "down"])
 
     def horizontal(self):
-        return set(self) & set(['left', 'right'])
+        return set(self) & set(["left", "right"])
 
     def pages(self):
-        return 'pages' in self and self['pages']
+        return "pages" in self and self["pages"]
 
     def percentage(self):
-        return 'percentage' in self and self['percentage']
+        return "percentage" in self and self["percentage"]
 
     def cycle(self):
-        return self.get('cycle') in (True, 'true', 'on', 'yes')
+        return self.get("cycle") in (True, "true", "on", "yes")
 
     def one_indexed(self):
-        return ('one_indexed' in self
-                and self.get('one_indexed') in (True, 'true', 'on', 'yes'))
+        return "one_indexed" in self and self.get("one_indexed") in (True, "true", "on", "yes")
 
     def multiply(self, n):
-        for key in ('up', 'right', 'down', 'left'):
+        for key in ("up", "right", "down", "left"):
             try:
                 self[key] *= n
             except KeyError:
                 pass
 
     def set(self, n):
-        for key in ('up', 'right', 'down', 'left'):
+        for key in ("up", "right", "down", "left"):
             if key in self:
                 self[key] = n
 
-    def move(self, direction, override=None, minimum=0,  # pylint: disable=too-many-arguments
-             maximum=9999, current=0, pagesize=1, offset=0):
+    def move(
+        self,
+        direction,
+        override=None,
+        minimum=0,  # pylint: disable=too-many-arguments
+        maximum=9999,
+        current=0,
+        pagesize=1,
+        offset=0,
+    ):
         """Calculates the new position in a given boundary.
 
         Example:
@@ -150,7 +156,7 @@ class Direction(dict):
             pos += current
         if self.cycle():
             cycles, pos = divmod(pos, (maximum + offset - minimum))
-            self['_move_cycles'] = int(cycles)
+            self["_move_cycles"] = int(cycles)
             ret = minimum + pos
         else:
             ret = max(min(pos, maximum + offset - 1), minimum)
@@ -163,16 +169,23 @@ class Direction(dict):
         return ret
 
     def move_cycles(self):
-        return self.get('_move_cycles', 0)
+        return self.get("_move_cycles", 0)
 
     def select(self, lst, current, pagesize, override=None, offset=1):
-        dest = self.move(direction=self.down(), override=override,
-                         current=current, pagesize=pagesize, minimum=0, maximum=len(lst) + 1)
-        selection = lst[min(current, dest):max(current, dest) + offset]
+        dest = self.move(
+            direction=self.down(),
+            override=override,
+            current=current,
+            pagesize=pagesize,
+            minimum=0,
+            maximum=len(lst) + 1,
+        )
+        selection = lst[min(current, dest) : max(current, dest) + offset]
         return dest + offset - 1, selection
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
     import sys
+
     sys.exit(doctest.testmod()[0])

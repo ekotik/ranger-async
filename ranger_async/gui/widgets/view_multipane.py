@@ -1,20 +1,20 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import curses
-from ranger_async.gui.widgets.view_base import ViewBase
+
 from ranger_async.gui.widgets.browsercolumn import BrowserColumn
+from ranger_async.gui.widgets.view_base import ViewBase
 
 
 class ViewMultipane(ViewBase):  # pylint: disable=too-many-ancestors
-
     def __init__(self, win):
         ViewBase.__init__(self, win)
 
-        self.fm.signal_bind('tab.layoutchange', self._layoutchange_handler)
-        self.fm.signal_bind('tab.change', self._tabchange_handler)
+        self.fm.signal_bind("tab.layoutchange", self._layoutchange_handler)
+        self.fm.signal_bind("tab.change", self._tabchange_handler)
         self.rebuild()
 
         self.old_draw_borders = self._draw_borders_setting()
@@ -65,8 +65,8 @@ class ViewMultipane(ViewBase):  # pylint: disable=too-many-ancestors
 
         if self._draw_borders_setting():
             draw_borders = self._draw_borders_setting()
-            if draw_borders in ['both', 'true']:   # 'true' for backwards compat.
-                border_types = ['separators', 'outline']
+            if draw_borders in ["both", "true"]:  # 'true' for backwards compat.
+                border_types = ["separators", "outline"]
             else:
                 border_types = [draw_borders]
             self._draw_borders(border_types)
@@ -92,27 +92,27 @@ class ViewMultipane(ViewBase):  # pylint: disable=too-many-ancestors
     def _draw_borders(self, border_types):
         # Referenced from ranger_async.gui.widgets.view_miller
         win = self.win
-        self.color('in_browser', 'border')
+        self.color("in_browser", "border")
 
         left_start = 0
         right_end = self.wid - 1
 
         # Draw the outline borders
-        if 'active-pane' not in border_types:
-            if 'outline' in border_types:
+        if "active-pane" not in border_types:
+            if "outline" in border_types:
                 try:
                     self._draw_border_rectangle(left_start, right_end)
                 except curses.error:
                     pass
 
             # Draw the column separators
-            if 'separators' in border_types:
+            if "separators" in border_types:
                 for child in self.columns[:-1]:
                     x = child.x + child.wid
                     y = self.hei - 1
                     try:
                         win.vline(1, x, curses.ACS_VLINE, y - 1)
-                        if 'outline' in border_types:
+                        if "outline" in border_types:
                             self.addch(0, x, curses.ACS_TTEE, 0)
                             self.addch(y, x, curses.ACS_BTEE, 0)
                         else:
@@ -133,7 +133,7 @@ class ViewMultipane(ViewBase):  # pylint: disable=too-many-ancestors
         ViewBase.resize(self, y, x, hei, wid)
 
         border_type = self._draw_borders_setting()
-        if border_type in ['outline', 'both', 'true', 'active-pane']:
+        if border_type in ["outline", "both", "true", "active-pane"]:
             # 'true' for backwards compat., no height pad needed for 'separators'
             pad = 1
         else:

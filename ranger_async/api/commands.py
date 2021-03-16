@@ -3,23 +3,22 @@
 
 # TODO: Add an optional "!" to all commands and set a flag if it's there
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import os
 import re
 
 import ranger_async
 from ranger_async import MACRO_DELIMITER, MACRO_DELIMITER_ESC
+from ranger_async.api import LinemodeBase, hook_init, hook_ready, register_linemode  # COMPAT
 from ranger_async.core.shared import FileManagerAware
 from ranger_async.ext.lazy_property import lazy_property
-from ranger_async.api import LinemodeBase, hook_init, hook_ready, register_linemode  # COMPAT
+
+__all__ = ["Command", "LinemodeBase", "hook_init", "hook_ready", "register_linemode"]  # COMPAT
 
 
-__all__ = ['Command', 'LinemodeBase', 'hook_init', 'hook_ready', 'register_linemode']  # COMPAT
-
-
-_SETTINGS_RE = re.compile(r'^\s*([^\s]+?)=(.*)$')
-_ALIAS_LINE_RE = re.compile(r'(\s+)')
+_SETTINGS_RE = re.compile(r"^\s*([^\s]+?)=(.*)$")
+_ALIAS_LINE_RE = re.compile(r"(\s+)")
 
 
 def _command_init(cls):
@@ -33,16 +32,16 @@ def _command_init(cls):
                 return None
             elif isinstance(results, str):
                 return results.replace(MACRO_DELIMITER, MACRO_DELIMITER_ESC)
-            elif hasattr(results, '__iter__'):
+            elif hasattr(results, "__iter__"):
                 return (result.replace(MACRO_DELIMITER, MACRO_DELIMITER_ESC) for result in results)
             return None
-        setattr(cls, 'tab', tab)
+
+        setattr(cls, "tab", tab)
 
     return cls
 
 
 class CommandContainer(FileManagerAware):
-
     def __init__(self):
         self.commands = {}
 
@@ -53,7 +52,7 @@ class CommandContainer(FileManagerAware):
         cmd_name = full_command.split()[0]
         cmd_cls = self.get_command(cmd_name)
         if cmd_cls is None:
-            self.fm.notify('alias failed: No such command: {0}'.format(cmd_name), bad=True)
+            self.fm.notify("alias failed: No such command: {0}".format(cmd_name), bad=True)
         else:
             self.commands[name] = _command_init(command_alias_factory(name, cmd_cls, full_command))
 
@@ -67,16 +66,19 @@ class CommandContainer(FileManagerAware):
 
     def load_commands_from_object(self, obj, filtr):
         for attribute_name in dir(obj):
-            if attribute_name[0] == '_' or attribute_name not in filtr:
+            if attribute_name[0] == "_" or attribute_name not in filtr:
                 continue
             attribute = getattr(obj, attribute_name)
-            if hasattr(attribute, '__call__'):
+            if hasattr(attribute, "__call__"):
                 self.commands[attribute_name] = _command_init(command_function_factory(attribute))
 
     def get_command(self, name, abbrev=False):
         if abbrev:
-            lst = [cls for cmd, cls in self.commands.items()
-                   if cls.allow_abbrev and cmd.startswith(name) or cmd == name]
+            lst = [
+                cls
+                for cmd, cls in self.commands.items()
+                if cls.allow_abbrev and cmd.startswith(name) or cmd == name
+            ]
             if not lst:
                 raise KeyError
             if len(lst) == 1:
@@ -91,11 +93,12 @@ class CommandContainer(FileManagerAware):
             return None
 
     def command_generator(self, start):
-        return sorted(cmd + ' ' for cmd in self.commands if cmd.startswith(start))
+        return sorted(cmd + " " for cmd in self.commands if cmd.startswith(start))
 
 
 class Command(FileManagerAware):
     """Abstract command class"""
+
     name = None
     allow_abbrev = True
     resolve_macros = True
@@ -113,14 +116,14 @@ class Command(FileManagerAware):
         self.line = line
         self.args = line.split()
         try:
-            self.firstpart = line[:line.rindex(' ') + 1]
+            self.firstpart = line[: line.rindex(" ") + 1]
         except ValueError:
-            self.firstpart = ''
+            self.firstpart = ""
 
     @classmethod
     def get_name(cls):
         classdict = cls.__mro__[0].__dict__
-        if 'name' in classdict and classdict['name']:
+        if "name" in classdict and classdict["name"]:
             return cls.name
         return cls.__name__
 
@@ -161,7 +164,7 @@ class Command(FileManagerAware):
 
     def start(self, n):
         """Returns everything until (inclusively) arg(n)"""
-        return ' '.join(self.args[:n]) + " "  # XXX
+        return " ".join(self.args[:n]) + " "  # XXX
 
     def shift(self):
         del self.args[0]
@@ -194,10 +197,10 @@ class Command(FileManagerAware):
             return self._setting_line
         match = _SETTINGS_RE.match(self.rest(1))
         if match:
-            self.firstpart += match.group(1) + '='
+            self.firstpart += match.group(1) + "="
             result = [match.group(1), match.group(2), True]
         else:
-            result = [self.arg(1), self.rest(2), ' ' in self.rest(1)]
+            result = [self.arg(1), self.rest(2), " " in self.rest(1)]
         self._setting_line = result
         return result
 
@@ -212,7 +215,7 @@ class Command(FileManagerAware):
         ['foo', '', True, True]
         """
         option, value, name_complete = self.parse_setting_line()
-        if len(option) >= 2 and option[-1] == '!':
+        if len(option) >= 2 and option[-1] == "!":
             toggle = True
             option = option[:-1]
             name_complete = True
@@ -240,13 +243,13 @@ class Command(FileManagerAware):
         args = self.line.split()
         rest = ""
         if args:
-            rest = self.line[len(args[0]):].lstrip()
+            rest = self.line[len(args[0]) :].lstrip()
             for arg in args[1:]:
                 if arg == "--":
                     rest = rest[2:].lstrip()
                     break
                 elif len(arg) > 1 and arg[0] == "-":
-                    rest = rest[len(arg):].lstrip()
+                    rest = rest[len(arg) :].lstrip()
                     flags += arg[1:]
                 else:
                     break
@@ -255,18 +258,19 @@ class Command(FileManagerAware):
     @lazy_property
     def log(self):
         import logging
-        return logging.getLogger('ranger_async.commands.' + self.__class__.__name__)
+
+        return logging.getLogger("ranger_async.commands." + self.__class__.__name__)
 
     # COMPAT: this is still used in old commands.py configs
     def _tab_only_directories(self):
-        from os.path import dirname, basename, expanduser, join
+        from os.path import basename, dirname, expanduser, join
 
         cwd = self.fm.thisdir.path
 
         rel_dest = self.rest(1)
 
         # expand the tilde into the user directory
-        if rel_dest.startswith('~'):
+        if rel_dest.startswith("~"):
             rel_dest = expanduser(rel_dest)
 
         # define some shortcuts
@@ -277,14 +281,13 @@ class Command(FileManagerAware):
 
         try:
             # are we at the end of a directory?
-            if rel_dest.endswith('/') or rel_dest == '':
+            if rel_dest.endswith("/") or rel_dest == "":
                 _, dirnames, _ = next(os.walk(abs_dest))
 
             # are we in the middle of the filename?
             else:
                 _, dirnames, _ = next(os.walk(abs_dirname))
-                dirnames = [dn for dn in dirnames
-                            if dn.startswith(rel_basename)]
+                dirnames = [dn for dn in dirnames if dn.startswith(rel_basename)]
         except (OSError, StopIteration):
             # os.walk found nothing
             pass
@@ -297,22 +300,21 @@ class Command(FileManagerAware):
 
             # one result. since it must be a directory, append a slash.
             if len(dirnames) == 1:
-                return self.start(1) + join(rel_dirname, dirnames[0]) + '/'
+                return self.start(1) + join(rel_dirname, dirnames[0]) + "/"
 
             # more than one result. append no slash, so the user can
             # manually type in the slash to advance into that directory
-            return (self.start(1) + join(rel_dirname, dirname)
-                    for dirname in dirnames)
+            return (self.start(1) + join(rel_dirname, dirname) for dirname in dirnames)
 
     def _tab_directory_content(self):  # pylint: disable=too-many-locals
-        from os.path import dirname, basename, expanduser, join
+        from os.path import basename, dirname, expanduser, join
 
         cwd = self.fm.thisdir.path
 
         rel_dest = self.rest(1)
 
         # expand the tilde into the user directory
-        if rel_dest.startswith('~'):
+        if rel_dest.startswith("~"):
             rel_dest = expanduser(rel_dest)
 
         # define some shortcuts
@@ -325,7 +327,7 @@ class Command(FileManagerAware):
             directory = self.fm.get_directory(abs_dest)
 
             # are we at the end of a directory?
-            if rel_dest.endswith('/') or rel_dest == '':
+            if rel_dest.endswith("/") or rel_dest == "":
                 if directory.content_loaded:
                     # Take the order from the directory object
                     names = [f.basename for f in directory.files]
@@ -341,16 +343,18 @@ class Command(FileManagerAware):
             else:
                 if directory.content_loaded:
                     # Take the order from the directory object
-                    names = [f.basename for f in directory.files
-                             if f.basename.startswith(rel_basename)]
+                    names = [
+                        f.basename for f in directory.files if f.basename.startswith(rel_basename)
+                    ]
                     if self.fm.thisfile.basename in names:
                         i = names.index(self.fm.thisfile.basename)
                         names = names[i:] + names[:i]
                 else:
                     # Fall back to old method with "os.walk"
                     _, dirnames, filenames = next(os.walk(abs_dirname))
-                    names = sorted([name for name in (dirnames + filenames)
-                                    if name.startswith(rel_basename)])
+                    names = sorted(
+                        [name for name in (dirnames + filenames) if name.startswith(rel_basename)]
+                    )
         except (OSError, StopIteration):
             # os.walk found nothing
             pass
@@ -362,7 +366,7 @@ class Command(FileManagerAware):
             # one result. append a slash if it's a directory
             if len(names) == 1:
                 path = join(rel_dirname, names[0])
-                slash = '/' if os.path.isdir(path) else ''
+                slash = "/" if os.path.isdir(path) else ""
                 return self.start(1) + path + slash
 
             # more than one result. append no slash, so the user can
@@ -371,8 +375,8 @@ class Command(FileManagerAware):
 
     def _tab_through_executables(self):
         from ranger_async.ext.get_executables import get_executables
-        programs = [program for program in get_executables() if
-                    program.startswith(self.rest(1))]
+
+        programs = [program for program in get_executables() if program.startswith(self.rest(1))]
         if not programs:
             return None
         if len(programs) == 1:
@@ -382,10 +386,11 @@ class Command(FileManagerAware):
 
 
 def command_alias_factory(name, cls, full_command):
-    class CommandAlias(cls):   # pylint: disable=too-few-public-methods
+    class CommandAlias(cls):  # pylint: disable=too-few-public-methods
         def __init__(self, line, *args, **kwargs):
             super(CommandAlias, self).__init__(
-                (full_command + ''.join(_ALIAS_LINE_RE.split(line)[1:])), *args, **kwargs)
+                (full_command + "".join(_ALIAS_LINE_RE.split(line)[1:])), *args, **kwargs
+            )
 
     CommandAlias.__name__ = name
     return CommandAlias
@@ -400,19 +405,19 @@ def command_function_factory(func):
                 return None
             if len(self.args) == 1:
                 try:
-                    return func(**{'narg': self.quantifier})
+                    return func(**{"narg": self.quantifier})
                 except TypeError:
                     return func()
 
             args, kwargs = list(), dict()
             for arg in self.args[1:]:
                 equal_sign = arg.find("=")
-                value = arg if equal_sign == -1 else arg[equal_sign + 1:]
+                value = arg if equal_sign == -1 else arg[equal_sign + 1 :]
                 try:
                     value = int(value)
                 except ValueError:
-                    if value in ('True', 'False'):
-                        value = (value == 'True')
+                    if value in ("True", "False"):
+                        value = value == "True"
                     else:
                         try:
                             value = float(value)
@@ -425,7 +430,7 @@ def command_function_factory(func):
                     kwargs[arg[:equal_sign]] = value
 
             if self.quantifier is not None:
-                kwargs['narg'] = self.quantifier
+                kwargs["narg"] = self.quantifier
 
             try:
                 if self.quantifier is None:
@@ -434,19 +439,21 @@ def command_function_factory(func):
                     try:
                         return func(*args, **kwargs)
                     except TypeError:
-                        del kwargs['narg']
+                        del kwargs["narg"]
                         return func(*args, **kwargs)
             except TypeError:
                 if ranger_async.args.debug:
                     raise
-                self.fm.notify("Bad arguments for %s: %s, %s" % (func.__name__, args, kwargs),
-                               bad=True)
+                self.fm.notify(
+                    "Bad arguments for %s: %s, %s" % (func.__name__, args, kwargs), bad=True
+                )
 
     CommandFunction.__name__ = func.__name__
     return CommandFunction
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
     import sys
+
     sys.exit(doctest.testmod()[0])

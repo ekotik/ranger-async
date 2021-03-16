@@ -3,7 +3,7 @@
 
 """The TaskView allows you to modify what the loader is doing."""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 from ranger_async.ext.accumulator import Accumulator
 
@@ -20,7 +20,7 @@ class TaskView(Widget, Accumulator):
 
     def draw(self):
         base_clr = []
-        base_clr.append('in_taskview')
+        base_clr.append("in_taskview")
         lst = self.get_list()
 
         if self.old_lst != lst:
@@ -36,7 +36,7 @@ class TaskView(Widget, Accumulator):
                 return
 
             self.addstr(0, 0, "Task View")
-            self.color_at(0, 0, self.wid, tuple(base_clr), 'title')
+            self.color_at(0, 0, self.wid, tuple(base_clr), "title")
 
             if lst:
                 for i in range(self.hei - 1):
@@ -50,14 +50,14 @@ class TaskView(Widget, Accumulator):
                     clr = list(base_clr)
 
                     if self.pointer == i:
-                        clr.append('selected')
+                        clr.append("selected")
 
                     descr = obj.get_description()
                     if obj.progressbar_supported and obj.percent >= 0 and obj.percent <= 100:
                         self.addstr(y, 0, "%3.2f%% - %s" % (obj.percent, descr), self.wid)
                         wid = int((self.wid / 100) * obj.percent)
                         self.color_at(y, 0, self.wid, tuple(clr))
-                        self.color_at(y, 0, wid, tuple(clr), 'loaded')
+                        self.color_at(y, 0, wid, tuple(clr), "loaded")
                     else:
                         self.addstr(y, 0, descr, self.wid)
                         self.color_at(y, 0, self.wid, tuple(clr))
@@ -65,7 +65,7 @@ class TaskView(Widget, Accumulator):
             else:
                 if self.hei > 1:
                     self.addstr(1, 0, "No task in the queue.")
-                    self.color_at(1, 0, self.wid, tuple(base_clr), 'error')
+                    self.color_at(1, 0, self.wid, tuple(base_clr), "error")
 
             self.color_reset()
 
@@ -87,7 +87,7 @@ class TaskView(Widget, Accumulator):
         self.fm.loader.move(pos_src=i, pos_dest=to)
 
     def press(self, key):
-        self.fm.ui.keymaps.use_keymap('taskview')
+        self.fm.ui.keymaps.use_keymap("taskview")
         self.fm.ui.press(key)
 
     def get_list(self):

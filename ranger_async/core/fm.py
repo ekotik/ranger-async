@@ -3,40 +3,39 @@
 
 """The File Manager, putting the pieces together"""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
-from time import time
-from collections import deque
 import mimetypes
 import os.path
 import pwd
 import socket
 import stat
 import sys
+from collections import deque
+from time import time
 
 import ranger_async.api
-from ranger_async.core.actions import Actions
-from ranger_async.core.tab import Tab
 from ranger_async.container import settings
-from ranger_async.container.tags import Tags, TagsDummy
-from ranger_async.gui.ui import UI
 from ranger_async.container.bookmarks import Bookmarks
-from ranger_async.core.runner import Runner
-from ranger_async.ext.img_display import get_image_displayer
-from ranger_async.core.metadata import MetadataManager
-from ranger_async.ext.rifle import Rifle
 from ranger_async.container.directory import Directory
-from ranger_async.ext.signals import SignalDispatcher
+from ranger_async.container.tags import Tags, TagsDummy
+from ranger_async.core.actions import Actions
 from ranger_async.core.loader import Loader
+from ranger_async.core.metadata import MetadataManager
+from ranger_async.core.runner import Runner
+from ranger_async.core.tab import Tab
 from ranger_async.ext import logutils
+from ranger_async.ext.img_display import get_image_displayer
+from ranger_async.ext.rifle import Rifle
+from ranger_async.ext.signals import SignalDispatcher
+from ranger_async.gui.ui import UI
 
 
-class FM(Actions,  # pylint: disable=too-many-instance-attributes
-         SignalDispatcher):
+class FM(Actions, SignalDispatcher):  # pylint: disable=too-many-instance-attributes
     input_blocked = False
     input_blocked_until = 0
-    mode = 'normal'  # either 'normal' or 'visual'.
-    search_method = 'ctime'
+    mode = "normal"  # either 'normal' or 'visual'.
+    search_method = "ctime"
 
     _previous_selection = None
     _visual_reverse = False
@@ -48,7 +47,7 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
         Actions.__init__(self)
         SignalDispatcher.__init__(self)
         self.ui = ui if ui is not None else UI()
-        self.start_paths = paths if paths is not None else ['.']
+        self.start_paths = paths if paths is not None else ["."]
         self.directories = dict()
         self.bookmarks = bookmarks
         self.current_tab = 1
@@ -69,12 +68,12 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
         try:
             self.username = pwd.getpwuid(os.geteuid()).pw_name
         except KeyError:
-            self.username = 'uid:' + str(os.geteuid())
+            self.username = "uid:" + str(os.geteuid())
         self.hostname = socket.gethostname()
-        self.home_path = os.path.expanduser('~')
+        self.home_path = os.path.expanduser("~")
 
         if not mimetypes.inited:
-            extra_files = [self.relpath('data/mime.types'), os.path.expanduser("~/.mime.types")]
+            extra_files = [self.relpath("data/mime.types"), os.path.expanduser("~/.mime.types")]
             mimetypes.init(mimetypes.knownfiles + extra_files)
         self.mimetypes = mimetypes
 
@@ -88,12 +87,12 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
             self.thistab = self.tabs[self.current_tab]
         else:
             self.current_tab = 1
-            self.tabs[self.current_tab] = self.thistab = Tab('.')
+            self.tabs[self.current_tab] = self.thistab = Tab(".")
 
-        if not ranger_async.args.clean and os.path.isfile(self.confpath('rifle.conf')):
-            rifleconf = self.confpath('rifle.conf')
+        if not ranger_async.args.clean and os.path.isfile(self.confpath("rifle.conf")):
+            rifleconf = self.confpath("rifle.conf")
         else:
-            rifleconf = self.relpath('config/rifle.conf')
+            rifleconf = self.relpath("config/rifle.conf")
         self.rifle = Rifle(rifleconf)
         self.rifle.reload_config()
 
@@ -101,40 +100,46 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
             if self.image_displayer:
                 self.image_displayer.quit()
             self.image_displayer = get_image_displayer(self.settings.preview_images_method)
+
         set_image_displayer()
-        self.settings.signal_bind('setopt.preview_images_method', set_image_displayer,
-                                  priority=settings.SIGNAL_PRIORITY_AFTER_SYNC)
+        self.settings.signal_bind(
+            "setopt.preview_images_method",
+            set_image_displayer,
+            priority=settings.SIGNAL_PRIORITY_AFTER_SYNC,
+        )
 
         self.settings.signal_bind(
-            'setopt.preview_images',
+            "setopt.preview_images",
             lambda signal: signal.fm.previews.clear(),
         )
 
         if ranger_async.args.clean:
             self.tags = TagsDummy("")
         elif self.tags is None:
-            self.tags = Tags(self.datapath('tagged'))
+            self.tags = Tags(self.datapath("tagged"))
 
         if self.bookmarks is None:
             if ranger_async.args.clean:
                 bookmarkfile = None
             else:
-                bookmarkfile = self.datapath('bookmarks')
+                bookmarkfile = self.datapath("bookmarks")
             self.bookmarks = Bookmarks(
                 bookmarkfile=bookmarkfile,
                 bookmarktype=Directory,
-                autosave=self.settings.autosave_bookmarks)
+                autosave=self.settings.autosave_bookmarks,
+            )
             self.bookmarks.load()
-            self.bookmarks.enable_saving_backtick_bookmark(
-                self.settings.save_backtick_bookmark)
+            self.bookmarks.enable_saving_backtick_bookmark(self.settings.save_backtick_bookmark)
 
         self.ui.setup_curses()
         self.ui.initialize()
 
-        self.rifle.hook_before_executing = lambda a, b, flags: \
-            self.ui.suspend() if 'f' not in flags else None
-        self.rifle.hook_after_executing = lambda a, b, flags: \
-            self.ui.initialize() if 'f' not in flags else None
+        self.rifle.hook_before_executing = (
+            lambda a, b, flags: self.ui.suspend() if "f" not in flags else None
+        )
+        self.rifle.hook_after_executing = (
+            lambda a, b, flags: self.ui.initialize() if "f" not in flags else None
+        )
         self.rifle.hook_logger = self.notify
         old_preprocessing_hook = self.rifle.hook_command_preprocessing
 
@@ -146,38 +151,41 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
         # 3. call rifle with a command that starts with "sxiv " or "feh "
         def sxiv_workaround_hook(command):
             import re
+
             from ranger_async.ext.shell_escape import shell_quote
 
-            if self.settings.open_all_images and \
-                    not self.thisdir.marked_items and \
-                    re.match(r'^(feh|sxiv|imv|pqiv) ', command):
+            if (
+                self.settings.open_all_images
+                and not self.thisdir.marked_items
+                and re.match(r"^(feh|sxiv|imv|pqiv) ", command)
+            ):
 
                 images = [f.relative_path for f in self.thisdir.files if f.image]
                 escaped_filenames = " ".join(shell_quote(f) for f in images if "\x00" not in f)
 
-                if images and self.thisfile.relative_path in images and \
-                        "$@" in command:
+                if images and self.thisfile.relative_path in images and "$@" in command:
                     new_command = None
 
-                    if command[0:5] == 'sxiv ':
+                    if command[0:5] == "sxiv ":
                         number = images.index(self.thisfile.relative_path) + 1
                         new_command = command.replace("sxiv ", "sxiv -n %d " % number, 1)
 
-                    if command[0:4] == 'feh ':
+                    if command[0:4] == "feh ":
                         new_command = command.replace(
                             "feh ",
                             "feh --start-at %s " % shell_quote(self.thisfile.relative_path),
                             1,
                         )
 
-                    if command[0:4] == 'imv ':
+                    if command[0:4] == "imv ":
                         number = images.index(self.thisfile.relative_path) + 1
                         new_command = command.replace("imv ", "imv -n %d " % number, 1)
 
-                    if command[0:5] == 'pqiv ':
+                    if command[0:5] == "pqiv ":
                         number = images.index(self.thisfile.relative_path)
                         new_command = command.replace(
-                            "pqiv ", "pqiv --action \"goto_file_byindex(%d)\" " % number, 1)
+                            "pqiv ", 'pqiv --action "goto_file_byindex(%d)" ' % number, 1
+                        )
 
                     if new_command:
                         command = "set -- %s; %s" % (escaped_filenames, new_command)
@@ -187,15 +195,16 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
 
         def mylogfunc(text):
             self.notify(text, bad=True)
+
         self.run = Runner(ui=self.ui, logfunc=mylogfunc, fm=self)
 
         self.settings.signal_bind(
-            'setopt.metadata_deep_search',
-            lambda signal: setattr(signal.fm.metadata, 'deep_search', signal.value)
+            "setopt.metadata_deep_search",
+            lambda signal: setattr(signal.fm.metadata, "deep_search", signal.value),
         )
         self.settings.signal_bind(
-            'setopt.save_backtick_bookmark',
-            lambda signal: signal.fm.bookmarks.enable_saving_backtick_bookmark(signal.value)
+            "setopt.save_backtick_bookmark",
+            lambda signal: signal.fm.bookmarks.enable_saving_backtick_bookmark(signal.value),
         )
 
     def destroy(self):
@@ -272,28 +281,35 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
                     shutil.copy(self.relpath(src), self.confpath(dest))
                 except OSError as ex:
                     sys.stderr.write("  ERROR: %s\n" % str(ex))
-        if which in ('rifle', 'all'):
-            copy('config/rifle.conf', 'rifle.conf')
-        if which in ('commands', 'all'):
-            copy('config/commands_sample.py', 'commands.py')
-        if which in ('commands_full', 'all'):
-            copy('config/commands.py', 'commands_full.py')
-        if which in ('rc', 'all'):
-            copy('config/rc.conf', 'rc.conf')
-        if which in ('scope', 'all'):
-            copy('data/scope.sh', 'scope.sh')
-            os.chmod(self.confpath('scope.sh'),
-                     os.stat(self.confpath('scope.sh')).st_mode | stat.S_IXUSR)
-        if which in ('all', 'rifle', 'scope', 'commands', 'commands_full', 'rc'):
-            sys.stderr.write("\n> Please note that configuration files may "
-                             "change as ranger-async evolves.\n  It's completely up to you to "
-                             "keep them up to date.\n")
-            if os.environ.get('RANGER_ASYNC_LOAD_DEFAULT_RC', 'TRUE').upper() != 'FALSE':
-                sys.stderr.write("\n> To stop ranger-async from loading "
-                                 "\033[1mboth\033[0m the default and your custom rc.conf,\n"
-                                 "  please set the environment variable "
-                                 "\033[1mRANGER_ASYNC_LOAD_DEFAULT_RC\033[0m to "
-                                 "\033[1mFALSE\033[0m.\n")
+
+        if which in ("rifle", "all"):
+            copy("config/rifle.conf", "rifle.conf")
+        if which in ("commands", "all"):
+            copy("config/commands_sample.py", "commands.py")
+        if which in ("commands_full", "all"):
+            copy("config/commands.py", "commands_full.py")
+        if which in ("rc", "all"):
+            copy("config/rc.conf", "rc.conf")
+        if which in ("scope", "all"):
+            copy("data/scope.sh", "scope.sh")
+            os.chmod(
+                self.confpath("scope.sh"),
+                os.stat(self.confpath("scope.sh")).st_mode | stat.S_IXUSR,
+            )
+        if which in ("all", "rifle", "scope", "commands", "commands_full", "rc"):
+            sys.stderr.write(
+                "\n> Please note that configuration files may "
+                "change as ranger-async evolves.\n  It's completely up to you to "
+                "keep them up to date.\n"
+            )
+            if os.environ.get("RANGER_ASYNC_LOAD_DEFAULT_RC", "TRUE").upper() != "FALSE":
+                sys.stderr.write(
+                    "\n> To stop ranger-async from loading "
+                    "\033[1mboth\033[0m the default and your custom rc.conf,\n"
+                    "  please set the environment variable "
+                    "\033[1mRANGER_ASYNC_LOAD_DEFAULT_RC\033[0m to "
+                    "\033[1mFALSE\033[0m.\n"
+                )
         else:
             sys.stderr.write("Unknown config file `%s'\n" % which)
 
@@ -330,14 +346,15 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
             return obj
 
     def garbage_collect(
-            self, age,
-            tabs=None):  # tabs=None is for COMPATibility pylint: disable=unused-argument
+        self, age, tabs=None
+    ):  # tabs=None is for COMPATibility pylint: disable=unused-argument
         """Delete unused directory objects"""
         for key in tuple(self.directories):
             value = self.directories[key]
             if age != -1:
-                if not value.is_older_than(age) \
-                        or any(value in tab.pathway for tab in self.tabs.values()):
+                if not value.is_older_than(age) or any(
+                    value in tab.pathway for tab in self.tabs.values()
+                ):
                     continue
             del self.directories[key]
             if value.is_directory:
@@ -389,8 +406,8 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
 
                 # gc_tick += 1
                 # if gc_tick > ranger_async.TICKS_BEFORE_COLLECTING_GARBAGE:
-                    # gc_tick = 0
-                    # self.garbage_collect(ranger_async.TIME_BEFORE_FILE_BECOMES_GARBAGE)
+                # gc_tick = 0
+                # self.garbage_collect(ranger_async.TIME_BEFORE_FILE_BECOMES_GARBAGE)
 
         except KeyboardInterrupt:
             # this only happens in --debug mode. By default, interrupts
@@ -402,14 +419,17 @@ class FM(Actions,  # pylint: disable=too-many-instance-attributes
             if ranger_async.args.choosedir and self.thisdir and self.thisdir.path:
                 # XXX: UnicodeEncodeError: 'utf-8' codec can't encode character
                 # '\udcf6' in position 42: surrogates not allowed
-                with open(ranger_async.args.choosedir, 'w') as fobj:
+                with open(ranger_async.args.choosedir, "w") as fobj:
                     fobj.write(self.thisdir.path)
             self.bookmarks.remember(self.thisdir)
             self.bookmarks.save()
 
             # Save tabs
-            if not ranger_async.args.clean and self.settings.save_tabs_on_exit and len(self.tabs) > 1:
-                with open(self.datapath('tabs'), 'a') as fobj:
+            if (
+                not ranger_async.args.clean
+                and self.settings.save_tabs_on_exit
+                and len(self.tabs) > 1
+            ):
+                with open(self.datapath("tabs"), "a") as fobj:
                     # Don't save active tab since launching ranger-async changes the active tab
-                    fobj.write('\0'.join(v.path for t, v in self.tabs.items())
-                               + '\0\0')
+                    fobj.write("\0".join(v.path for t, v in self.tabs.items()) + "\0\0")

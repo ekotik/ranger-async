@@ -1,10 +1,10 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import os
-from os.path import abspath, normpath, join, expanduser, isdir, dirname
+from os.path import abspath, dirname, expanduser, isdir, join, normpath
 
 from ranger_async import PY3
 from ranger_async.container import settings
@@ -13,7 +13,6 @@ from ranger_async.core.shared import FileManagerAware, SettingsAware
 
 
 class Tab(FileManagerAware, SettingsAware):  # pylint: disable=too-many-instance-attributes
-
     def __init__(self, path):
         self.thisdir = None  # Current Working Directory
         self._thisfile = None  # Current File
@@ -27,11 +26,13 @@ class Tab(FileManagerAware, SettingsAware):  # pylint: disable=too-many-instance
         # NOTE: in the line below, weak=True works only in python3.  In python2,
         # weak references are not equal to the original object when tested with
         # "==", and this breaks _set_thisfile_from_signal and _on_tab_change.
-        self.fm.signal_bind('move', self._set_thisfile_from_signal,
-                            priority=settings.SIGNAL_PRIORITY_AFTER_SYNC,
-                            weak=(PY3))
-        self.fm.signal_bind('tab.change', self._on_tab_change,
-                            weak=(PY3))
+        self.fm.signal_bind(
+            "move",
+            self._set_thisfile_from_signal,
+            priority=settings.SIGNAL_PRIORITY_AFTER_SYNC,
+            weak=(PY3),
+        )
+        self.fm.signal_bind("tab.change", self._on_tab_change, weak=(PY3))
 
     def _set_thisfile_from_signal(self, signal):
         if self == signal.tab:
@@ -49,7 +50,7 @@ class Tab(FileManagerAware, SettingsAware):  # pylint: disable=too-many-instance
     def _set_thisfile(self, value):
         if value is not self._thisfile:
             previous = self._thisfile
-            self.fm.signal_emit('move', previous=previous, new=value, tab=self)
+            self.fm.signal_emit("move", previous=previous, new=value, tab=self)
 
     def _get_thisfile(self):
         return self._thisfile
@@ -164,12 +165,12 @@ class Tab(FileManagerAware, SettingsAware):  # pylint: disable=too-many-instance
 
         # build the pathway, a tuple of directory objects which lie
         # on the path to the current directory.
-        if path == '/':
-            self.pathway = (self.fm.get_directory('/'), )
+        if path == "/":
+            self.pathway = (self.fm.get_directory("/"),)
         else:
             pathway = []
-            currentpath = '/'
-            for comp in path.split('/'):
+            currentpath = "/"
+            for comp in path.split("/"):
                 currentpath = join(currentpath, comp)
                 pathway.append(self.fm.get_directory(currentpath))
             self.pathway = tuple(pathway)
@@ -193,7 +194,7 @@ class Tab(FileManagerAware, SettingsAware):  # pylint: disable=too-many-instance
         if history:
             self.history.add(new_thisdir)
 
-        self.fm.signal_emit('cd', previous=previous, new=self.thisdir)
+        self.fm.signal_emit("cd", previous=previous, new=self.thisdir)
 
         return True
 

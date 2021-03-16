@@ -3,15 +3,13 @@
 
 """Functions to escape metacharacters of arguments for shell commands."""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
-
-META_CHARS = (' ', "'", '"', '`', '&', '|', ';', '#',
-              '$', '!', '(', ')', '[', ']', '<', '>', '\t')
+META_CHARS = (" ", "'", '"', "`", "&", "|", ";", "#", "$", "!", "(", ")", "[", "]", "<", ">", "\t")
 UNESCAPABLE = set(map(chr, list(range(9)) + list(range(10, 32)) + list(range(127, 256))))
 # pylint: disable=consider-using-dict-comprehension
 # COMPAT Dictionary comprehensions didn't exist before 2.7
-META_DICT = dict([(mc, '\\' + mc) for mc in META_CHARS])
+META_DICT = dict([(mc, "\\" + mc) for mc in META_CHARS])
 
 
 def shell_quote(string):
@@ -24,7 +22,7 @@ def shell_escape(arg):
     arg = str(arg)
     if UNESCAPABLE & set(arg):
         return shell_quote(arg)
-    arg = arg.replace('\\', '\\\\')  # make sure this comes at the start
+    arg = arg.replace("\\", "\\\\")  # make sure this comes at the start
     for key, value in META_DICT.items():
         arg = arg.replace(key, value)
     return arg

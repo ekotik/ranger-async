@@ -1,40 +1,54 @@
 # This file was taken from the python 2.7.13 standard library and has been
 # slightly modified to do a "yield" after every 16KB of copying
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import os
 import stat
 import sys
-from shutil import (_samefile, rmtree, _basename, _destinsrc, Error, SpecialFileError)
+from shutil import Error, SpecialFileError, _basename, _destinsrc, _samefile, rmtree
+
 from ranger_async.ext.safe_path import get_safe_path
 
-__all__ = ["copyfileobj", "copyfile", "copystat", "copy2", "BLOCK_SIZE",
-           "copytree", "move", "rmtree", "Error", "SpecialFileError"]
+__all__ = [
+    "copyfileobj",
+    "copyfile",
+    "copystat",
+    "copy2",
+    "BLOCK_SIZE",
+    "copytree",
+    "move",
+    "rmtree",
+    "Error",
+    "SpecialFileError",
+]
 
 BLOCK_SIZE = 16 * 1024
 
 
 if sys.version_info < (3, 3):
+
     def copystat(src, dst):
         """Copy all stat info (mode bits, atime, mtime, flags) from src to dst"""
         st = os.stat(src)  # pylint: disable=invalid-name
         mode = stat.S_IMODE(st.st_mode)
-        if hasattr(os, 'utime'):
+        if hasattr(os, "utime"):
             try:
                 os.utime(dst, (st.st_atime, st.st_mtime))
             except OSError:
                 pass
-        if hasattr(os, 'chmod'):
+        if hasattr(os, "chmod"):
             try:
                 os.chmod(dst, mode)
             except OSError:
                 pass
-        if hasattr(os, 'chflags') and hasattr(st, 'st_flags'):
+        if hasattr(os, "chflags") and hasattr(st, "st_flags"):
             try:
                 os.chflags(dst, st.st_flags)  # pylint: disable=no-member
             except OSError:
                 pass
+
+
 else:
     from shutil import _copyxattr  # pylint: disable=no-name-in-module
 
@@ -45,6 +59,7 @@ else:
         only if both `src` and `dst` are symlinks.
 
         """
+
         def _nop(*args, **kwargs):  # pylint: disable=unused-argument
             pass
 
@@ -54,6 +69,7 @@ else:
             # use the real function if it exists
             def lookup(name):
                 return getattr(os, name, _nop)
+
         else:
             # use the real function only if it exists
             # *and* it supports follow_symlinks
@@ -66,8 +82,7 @@ else:
         st = lookup("stat")(src, follow_symlinks=follow)  # pylint: disable=invalid-name
         mode = stat.S_IMODE(st.st_mode)
         try:
-            lookup("utime")(dst, ns=(st.st_atime_ns, st.st_mtime_ns),
-                            follow_symlinks=follow)
+            lookup("utime")(dst, ns=(st.st_atime_ns, st.st_mtime_ns), follow_symlinks=follow)
         except OSError:
             pass
         try:
@@ -86,7 +101,7 @@ else:
             pass
         except OSError:
             pass
-        if hasattr(st, 'st_flags'):
+        if hasattr(st, "st_flags"):
             try:
                 lookup("chflags")(dst, st.st_flags, follow_symlinks=follow)
             except OSError:
@@ -125,8 +140,8 @@ def copyfile(src, dst):
             if stat.S_ISFIFO(st.st_mode):
                 raise SpecialFileError("`%s` is a named pipe" % fn)
 
-    with open(src, 'rb') as fsrc:
-        with open(dst, 'wb') as fdst:
+    with open(src, "rb") as fsrc:
+        with open(dst, "wb") as fdst:
             for done in copyfileobj(fsrc, fdst):
                 yield done
 
@@ -152,8 +167,14 @@ def copy2(src, dst, overwrite=False, symlinks=False, make_safe_path=get_safe_pat
         copystat(src, dst)
 
 
-def copytree(src, dst,  # pylint: disable=too-many-locals,too-many-branches
-             symlinks=False, ignore=None, overwrite=False, make_safe_path=get_safe_path):
+def copytree(
+    src,
+    dst,  # pylint: disable=too-many-locals,too-many-branches
+    symlinks=False,
+    ignore=None,
+    overwrite=False,
+    make_safe_path=get_safe_path,
+):
     """Recursively copy a directory tree using copy2().
 
     The destination directory must not already exist.
@@ -207,15 +228,19 @@ def copytree(src, dst,  # pylint: disable=too-many-locals,too-many-branches
                 copystat(srcname, dstname)
             elif os.path.isdir(srcname):
                 n = 0
-                for n in copytree(srcname, dstname, symlinks, ignore, overwrite,
-                                  make_safe_path):
+                for n in copytree(srcname, dstname, symlinks, ignore, overwrite, make_safe_path):
                     yield done + n
                 done += n
             else:
                 # Will raise a SpecialFileError for unsupported file types
                 n = 0
-                for n in copy2(srcname, dstname, overwrite=overwrite, symlinks=symlinks,
-                               make_safe_path=make_safe_path):
+                for n in copy2(
+                    srcname,
+                    dstname,
+                    overwrite=overwrite,
+                    symlinks=symlinks,
+                    make_safe_path=make_safe_path,
+                ):
                     yield done + n
                 done += n
         # catch the Error from the recursive copytree so that we can
@@ -266,12 +291,14 @@ def move(src, dst, overwrite=False, make_safe_path=get_safe_path):
         if os.path.isdir(src):
             if _destinsrc(src, dst):
                 raise Error("Cannot move a directory '%s' into itself '%s'." % (src, dst))
-            for done in copytree(src, real_dst, symlinks=True, overwrite=overwrite,
-                                 make_safe_path=make_safe_path):
+            for done in copytree(
+                src, real_dst, symlinks=True, overwrite=overwrite, make_safe_path=make_safe_path
+            ):
                 yield done
             rmtree(src)
         else:
-            for done in copy2(src, real_dst, symlinks=True, overwrite=overwrite,
-                              make_safe_path=make_safe_path):
+            for done in copy2(
+                src, real_dst, symlinks=True, overwrite=overwrite, make_safe_path=make_safe_path
+            ):
                 yield done
             os.unlink(src)

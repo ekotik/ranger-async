@@ -1,68 +1,68 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
-import sys
 import copy
 import curses.ascii
+import sys
 
 from ranger_async import PY3
 
-digits = set(range(ord('0'), ord('9') + 1))  # pylint: disable=invalid-name
+digits = set(range(ord("0"), ord("9") + 1))  # pylint: disable=invalid-name
 
 # Arbitrary numbers which are not used with curses.KEY_XYZ
 ANYKEY, PASSIVE_ACTION, ALT_KEY, QUANT_KEY = range(9001, 9005)
 
 special_keys = {  # pylint: disable=invalid-name
-    'bs': curses.KEY_BACKSPACE,
-    'backspace': curses.KEY_BACKSPACE,
-    'backspace2': curses.ascii.DEL,
-    'delete': curses.KEY_DC,
-    's-delete': curses.KEY_SDC,
-    'insert': curses.KEY_IC,
-    'cr': ord("\n"),
-    'enter': ord("\n"),
-    'return': ord("\n"),
-    'space': ord(" "),
-    'esc': curses.ascii.ESC,
-    'escape': curses.ascii.ESC,
-    'down': curses.KEY_DOWN,
-    'up': curses.KEY_UP,
-    'left': curses.KEY_LEFT,
-    'right': curses.KEY_RIGHT,
-    'pagedown': curses.KEY_NPAGE,
-    'pageup': curses.KEY_PPAGE,
-    'home': curses.KEY_HOME,
-    'end': curses.KEY_END,
-    'tab': ord('\t'),
-    's-tab': curses.KEY_BTAB,
-    'lt': ord('<'),
-    'gt': ord('>'),
+    "bs": curses.KEY_BACKSPACE,
+    "backspace": curses.KEY_BACKSPACE,
+    "backspace2": curses.ascii.DEL,
+    "delete": curses.KEY_DC,
+    "s-delete": curses.KEY_SDC,
+    "insert": curses.KEY_IC,
+    "cr": ord("\n"),
+    "enter": ord("\n"),
+    "return": ord("\n"),
+    "space": ord(" "),
+    "esc": curses.ascii.ESC,
+    "escape": curses.ascii.ESC,
+    "down": curses.KEY_DOWN,
+    "up": curses.KEY_UP,
+    "left": curses.KEY_LEFT,
+    "right": curses.KEY_RIGHT,
+    "pagedown": curses.KEY_NPAGE,
+    "pageup": curses.KEY_PPAGE,
+    "home": curses.KEY_HOME,
+    "end": curses.KEY_END,
+    "tab": ord("\t"),
+    "s-tab": curses.KEY_BTAB,
+    "lt": ord("<"),
+    "gt": ord(">"),
 }
 
 very_special_keys = {  # pylint: disable=invalid-name
-    'any': ANYKEY,
-    'alt': ALT_KEY,
-    'bg': PASSIVE_ACTION,
-    'allow_quantifiers': QUANT_KEY,
+    "any": ANYKEY,
+    "alt": ALT_KEY,
+    "bg": PASSIVE_ACTION,
+    "allow_quantifiers": QUANT_KEY,
 }
 
 
 def special_keys_init():
     for key, val in tuple(special_keys.items()):
-        special_keys['a-' + key] = (ALT_KEY, val)
+        special_keys["a-" + key] = (ALT_KEY, val)
 
-    for char in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!{}':
-        special_keys['a-' + char] = (ALT_KEY, ord(char))
+    for char in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!{}":
+        special_keys["a-" + char] = (ALT_KEY, ord(char))
 
-    for char in 'abcdefghijklmnopqrstuvwxyz_':
-        special_keys['c-' + char] = ord(char) - 96
+    for char in "abcdefghijklmnopqrstuvwxyz_":
+        special_keys["c-" + char] = ord(char) - 96
 
-    special_keys['c-space'] = 0
+    special_keys["c-space"] = 0
 
     for n in range(64):
-        special_keys['f' + str(n)] = curses.KEY_F0 + n
+        special_keys["f" + str(n)] = curses.KEY_F0 + n
 
 
 special_keys_init()
@@ -70,7 +70,8 @@ special_keys_init()
 special_keys.update(very_special_keys)
 del very_special_keys
 reversed_special_keys = dict(  # pylint: disable=invalid-name
-    (v, k) for k, v in special_keys.items())
+    (v, k) for k, v in special_keys.items()
+)
 
 
 def parse_keybinding(obj):  # pylint: disable=too-many-branches
@@ -100,9 +101,9 @@ def parse_keybinding(obj):  # pylint: disable=too-many-branches
         bracket_content = []
         for char in obj:
             if in_brackets:
-                if char == '>':
+                if char == ">":
                     in_brackets = False
-                    string = ''.join(bracket_content).lower()
+                    string = "".join(bracket_content).lower()
                     try:
                         keys = special_keys[string]
                         for key in keys:
@@ -111,29 +112,29 @@ def parse_keybinding(obj):  # pylint: disable=too-many-branches
                         if string.isdigit():
                             yield int(string)
                         else:
-                            yield ord('<')
+                            yield ord("<")
                             for bracket_char in bracket_content:
                                 yield ord(bracket_char)
-                            yield ord('>')
+                            yield ord(">")
                     except TypeError:
                         yield keys  # it was no tuple, just an int
                 else:
                     bracket_content.append(char)
             else:
-                if char == '<':
+                if char == "<":
                     in_brackets = True
                     bracket_content = []
                 else:
                     yield ord(char)
         if in_brackets:
-            yield ord('<')
+            yield ord("<")
             for char in bracket_content:
                 yield ord(char)
 
 
 def construct_keybinding(iterable):
     """Does the reverse of parse_keybinding"""
-    return ''.join(key_to_string(c) for c in iterable)
+    return "".join(key_to_string(c) for c in iterable)
 
 
 def key_to_string(key):
@@ -163,7 +164,6 @@ def _unbind_traverse(pointer, keys, pos=0):
 
 
 class KeyMaps(dict):
-
     def __init__(self, keybuffer=None):
         dict.__init__(self)
         self.keybuffer = keybuffer
@@ -181,7 +181,7 @@ class KeyMaps(dict):
         except KeyError:
             self[context] = pointer = dict()
         if PY3:
-            keys = keys.encode('utf-8').decode('latin-1')
+            keys = keys.encode("utf-8").decode("latin-1")
         return list(parse_keybinding(keys)), pointer
 
     def bind(self, context, keys, leaf):
@@ -207,8 +207,9 @@ class KeyMaps(dict):
             try:
                 pointer = pointer[key]
             except KeyError:
-                raise KeyError("Tried to copy the keybinding `%s',"
-                               " but it was not found." % source)
+                raise KeyError(
+                    "Tried to copy the keybinding `%s'," " but it was not found." % source
+                )
         self.bind(context, target, copy.deepcopy(pointer))
 
     def unbind(self, context, keys):
@@ -236,7 +237,7 @@ class KeyBuffer(object):  # pylint: disable=too-many-instance-attributes
         self.parse_error = False
 
         if self.keymap and self.quantifier_key in self.keymap:
-            if self.keymap[self.quantifier_key] == 'false':
+            if self.keymap[self.quantifier_key] == "false":
                 self.finished_parsing_quantifier = True
 
     def clear(self):
@@ -255,8 +256,7 @@ class KeyBuffer(object):  # pylint: disable=too-many-instance-attributes
             moved = True
             if key in self.pointer:
                 self.pointer = self.pointer[key]
-            elif self.any_key in self.pointer and \
-                    key not in self.exclude_from_anykey:
+            elif self.any_key in self.pointer and key not in self.exclude_from_anykey:
                 self.wildcards.append(key)
                 self.pointer = self.pointer[self.any_key]
             else:
@@ -277,6 +277,7 @@ class KeyBuffer(object):  # pylint: disable=too-many-instance-attributes
         return "".join(key_to_string(c) for c in self.keys)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
+
     sys.exit(doctest.testmod()[0])

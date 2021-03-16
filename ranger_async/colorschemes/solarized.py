@@ -5,14 +5,20 @@
 # from https://github.com/seebi/dircolors-solarized.
 # This is a modification of Roman Zimbelmann's default colorscheme.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
-from ranger_async.gui.colorscheme import ColorScheme
 from ranger_async.gui.color import (
-    cyan, magenta, red, white, default,
-    normal, bold, reverse,
+    bold,
+    cyan,
+    default,
     default_colors,
+    magenta,
+    normal,
+    red,
+    reverse,
+    white,
 )
+from ranger_async.gui.colorscheme import ColorScheme
 
 
 class Solarized(ColorScheme):
@@ -44,9 +50,9 @@ class Solarized(ColorScheme):
                 fg = 61
             if context.directory:
                 fg = 33
-            elif context.executable and not \
-                    any((context.media, context.container,
-                         context.fifo, context.socket)):
+            elif context.executable and not any(
+                (context.media, context.container, context.fifo, context.socket)
+            ):
                 fg = 64
                 attr |= bold
             if context.socket:

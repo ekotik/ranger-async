@@ -9,25 +9,24 @@ This module provides functions to draw images in the terminal using supported
 implementations, which are currently w3m, iTerm2 and urxvt.
 """
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import base64
+import codecs
 import curses
 import errno
 import fcntl
 import imghdr
+import json
 import os
 import struct
 import sys
-import warnings
-import json
-import threading
-from subprocess import Popen, PIPE
-from collections import defaultdict
-
 import termios
+import threading
+import warnings
+from collections import defaultdict
 from contextlib import contextmanager
-import codecs
+from subprocess import PIPE, Popen
 from tempfile import NamedTemporaryFile
 
 from ranger_async import PY3
@@ -36,11 +35,11 @@ from ranger_async.core.shared import FileManagerAware
 W3MIMGDISPLAY_ENV = "W3MIMGDISPLAY_PATH"
 W3MIMGDISPLAY_OPTIONS = []
 W3MIMGDISPLAY_PATHS = [
-    '/usr/lib/w3m/w3mimgdisplay',
-    '/usr/libexec/w3m/w3mimgdisplay',
-    '/usr/lib64/w3m/w3mimgdisplay',
-    '/usr/libexec64/w3m/w3mimgdisplay',
-    '/usr/local/libexec/w3m/w3mimgdisplay',
+    "/usr/lib/w3m/w3mimgdisplay",
+    "/usr/libexec/w3m/w3mimgdisplay",
+    "/usr/lib64/w3m/w3mimgdisplay",
+    "/usr/libexec64/w3m/w3mimgdisplay",
+    "/usr/local/libexec/w3m/w3mimgdisplay",
 ]
 
 # Helper functions shared between the previewers (make them static methods of the base class?)
@@ -49,8 +48,8 @@ W3MIMGDISPLAY_PATHS = [
 @contextmanager
 def temporarily_moved_cursor(to_y, to_x):
     """Common boilerplate code to move the cursor to a drawing area. Use it as:
-        with temporarily_moved_cursor(dest_y, dest_x):
-            your_func_here()"""
+    with temporarily_moved_cursor(dest_y, dest_x):
+        your_func_here()"""
     curses.putp(curses.tigetstr("sc"))
     move_cur(to_y, to_x)
     yield
@@ -62,7 +61,7 @@ def temporarily_moved_cursor(to_y, to_x):
 def move_cur(to_y, to_x):
     tparm = curses.tparm(curses.tigetstr("cup"), to_y, to_x)
     # on python2 stdout is already in binary mode, in python3 is accessed via buffer
-    bin_stdout = getattr(sys.stdout, 'buffer', sys.stdout)
+    bin_stdout = getattr(sys.stdout, "buffer", sys.stdout)
     bin_stdout.write(tparm)
 
 
@@ -93,6 +92,7 @@ def register_image_displayer(nickname=None):
             registry_key = image_displayer_class.__name__
         IMAGE_DISPLAYER_REGISTRY[registry_key] = image_displayer_class
         return image_displayer_class
+
     return decorator
 
 
@@ -104,7 +104,7 @@ def get_image_displayer(registry_key):
 class ImageDisplayer(object):
     """Image display provider functions for drawing images in the terminal"""
 
-    working_dir = os.environ.get('XDG_RUNTIME_DIR', os.path.expanduser("~") or None)
+    working_dir = os.environ.get("XDG_RUNTIME_DIR", os.path.expanduser("~") or None)
 
     def draw(self, path, start_x, start_y, width, height):
         """Draw an image at the given coordinates."""
@@ -125,6 +125,7 @@ class W3MImageDisplayer(ImageDisplayer, FileManagerAware):
 
     w3m need to be installed for this to work.
     """
+
     is_initialized = False
 
     def __init__(self):
@@ -135,8 +136,13 @@ class W3MImageDisplayer(ImageDisplayer, FileManagerAware):
         """start w3mimgdisplay"""
         self.binary_path = None
         self.binary_path = self._find_w3mimgdisplay_executable()  # may crash
-        self.process = Popen([self.binary_path] + W3MIMGDISPLAY_OPTIONS, cwd=self.working_dir,
-                             stdin=PIPE, stdout=PIPE, universal_newlines=True)
+        self.process = Popen(
+            [self.binary_path] + W3MIMGDISPLAY_OPTIONS,
+            cwd=self.working_dir,
+            stdin=PIPE,
+            stdout=PIPE,
+            universal_newlines=True,
+        )
         self.is_initialized = True
 
     @staticmethod
@@ -145,9 +151,11 @@ class W3MImageDisplayer(ImageDisplayer, FileManagerAware):
         for path in paths:
             if path is not None and os.path.exists(path):
                 return path
-        raise ImageDisplayError("No w3mimgdisplay executable found.  Please set "
-                                "the path manually by setting the %s environment variable.  (see "
-                                "man page)" % W3MIMGDISPLAY_ENV)
+        raise ImageDisplayError(
+            "No w3mimgdisplay executable found.  Please set "
+            "the path manually by setting the %s environment variable.  (see "
+            "man page)" % W3MIMGDISPLAY_ENV
+        )
 
     def _get_font_dimensions(self):
         # Get the height and width of a character displayed in the terminal in
@@ -172,14 +180,14 @@ class W3MImageDisplayer(ImageDisplayer, FileManagerAware):
     def draw(self, path, start_x, start_y, width, height):
         if not self.is_initialized or self.process.poll() is not None:
             self.initialize()
-        input_gen = self._generate_w3m_input(path, start_x, start_y, width,
-                                             height)
+        input_gen = self._generate_w3m_input(path, start_x, start_y, width, height)
 
         # Mitigate the issue with the horizontal black bars when
         # selecting some images on some systems. 2 milliseconds seems
         # enough. Adjust as necessary.
         if self.fm.settings.w3m_delay > 0:
             from time import sleep
+
             sleep(self.fm.settings.w3m_delay)
 
         self.process.stdin.write(input_gen)
@@ -236,7 +244,7 @@ class W3MImageDisplayer(ImageDisplayer, FileManagerAware):
         output = self.process.stdout.readline().split()
 
         if len(output) != 2:
-            raise ImageDisplayError('Failed to execute w3mimgdisplay', output)
+            raise ImageDisplayError("Failed to execute w3mimgdisplay", output)
 
         width = int(output[0])
         height = int(output[1])
@@ -264,6 +272,7 @@ class W3MImageDisplayer(ImageDisplayer, FileManagerAware):
     def quit(self):
         if self.is_initialized and self.process and self.process.poll() is None:
             self.process.kill()
+
 
 # TODO: remove FileManagerAwareness, as stuff in ranger_async.ext should be
 # ranger-async-independent libraries.
@@ -293,21 +302,17 @@ class ITerm2ImageDisplayer(ImageDisplayer, FileManagerAware):
         image_width, image_height = self._get_image_dimensions(path)
         if max_cols == 0 or max_rows == 0 or image_width == 0 or image_height == 0:
             return ""
-        image_width = self._fit_width(
-            image_width, image_height, max_cols, max_rows)
+        image_width = self._fit_width(image_width, image_height, max_cols, max_rows)
         content = self._encode_image_content(path)
         display_protocol = "\033"
         close_protocol = "\a"
-        if "screen" in os.environ['TERM']:
+        if "screen" in os.environ["TERM"]:
             display_protocol += "Ptmux;\033\033"
             close_protocol += "\033\\"
 
         text = "{0}]1337;File=inline=1;preserveAspectRatio=0;size={1};width={2}px:{3}{4}\n".format(
-            display_protocol,
-            str(len(content)),
-            str(int(image_width)),
-            content,
-            close_protocol)
+            display_protocol, str(len(content)), str(int(image_width)), content, close_protocol
+        )
         return text
 
     def _fit_width(self, width, height, max_cols, max_rows):
@@ -334,41 +339,41 @@ class ITerm2ImageDisplayer(ImageDisplayer, FileManagerAware):
     @staticmethod
     def _encode_image_content(path):
         """Read and encode the contents of path"""
-        with open(path, 'rb') as fobj:
-            return base64.b64encode(fobj.read()).decode('utf-8')
+        with open(path, "rb") as fobj:
+            return base64.b64encode(fobj.read()).decode("utf-8")
 
     @staticmethod
     def _get_image_dimensions(path):
         """Determine image size using imghdr"""
-        file_handle = open(path, 'rb')
+        file_handle = open(path, "rb")
         file_header = file_handle.read(24)
         image_type = imghdr.what(path)
         if len(file_header) != 24:
             file_handle.close()
             return 0, 0
-        if image_type == 'png':
-            check = struct.unpack('>i', file_header[4:8])[0]
-            if check != 0x0d0a1a0a:
+        if image_type == "png":
+            check = struct.unpack(">i", file_header[4:8])[0]
+            if check != 0x0D0A1A0A:
                 file_handle.close()
                 return 0, 0
-            width, height = struct.unpack('>ii', file_header[16:24])
-        elif image_type == 'gif':
-            width, height = struct.unpack('<HH', file_header[6:10])
-        elif image_type == 'jpeg':
+            width, height = struct.unpack(">ii", file_header[16:24])
+        elif image_type == "gif":
+            width, height = struct.unpack("<HH", file_header[6:10])
+        elif image_type == "jpeg":
             unreadable = OSError if PY3 else IOError
             try:
                 file_handle.seek(0)
                 size = 2
                 ftype = 0
-                while not 0xc0 <= ftype <= 0xcf:
+                while not 0xC0 <= ftype <= 0xCF:
                     file_handle.seek(size, 1)
                     byte = file_handle.read(1)
-                    while ord(byte) == 0xff:
+                    while ord(byte) == 0xFF:
                         byte = file_handle.read(1)
                     ftype = ord(byte)
-                    size = struct.unpack('>H', file_handle.read(2))[0] - 2
+                    size = struct.unpack(">H", file_handle.read(2))[0] - 2
                 file_handle.seek(1, 1)
-                height, width = struct.unpack('>HH', file_handle.read(4))
+                height, width = struct.unpack(">HH", file_handle.read(4))
             except unreadable:
                 height, width = 0, 0
         else:
@@ -394,21 +399,24 @@ class TerminologyImageDisplayer(ImageDisplayer, FileManagerAware):
     def draw(self, path, start_x, start_y, width, height):
         with temporarily_moved_cursor(start_y, start_x):
             # Write intent
-            sys.stdout.write("%s}ic#%d;%d;%s%s" % (
-                self.display_protocol,
-                width, height,
-                path,
-                self.close_protocol))
+            sys.stdout.write(
+                "%s}ic#%d;%d;%s%s"
+                % (self.display_protocol, width, height, path, self.close_protocol)
+            )
 
             # Write Replacement commands ('#')
             for y in range(0, height):
                 move_cur(start_y + y, start_x)
-                sys.stdout.write("%s}ib%s%s%s}ie%s\n" % (  # needs a newline to work
-                    self.display_protocol,
-                    self.close_protocol,
-                    "#" * width,
-                    self.display_protocol,
-                    self.close_protocol))
+                sys.stdout.write(
+                    "%s}ib%s%s%s}ie%s\n"
+                    % (  # needs a newline to work
+                        self.display_protocol,
+                        self.close_protocol,
+                        "#" * width,
+                        self.display_protocol,
+                        self.close_protocol,
+                    )
+                )
 
     def clear(self, start_x, start_y, width, height):
         self.fm.ui.win.redrawwin()
@@ -430,7 +438,7 @@ class URXVTImageDisplayer(ImageDisplayer, FileManagerAware):
     def __init__(self):
         self.display_protocol = "\033"
         self.close_protocol = "\a"
-        if "screen" in os.environ['TERM']:
+        if "screen" in os.environ["TERM"]:
             self.display_protocol += "Ptmux;\033\033"
             self.close_protocol += "\033\\"
         self.display_protocol += "]20;"
@@ -469,7 +477,7 @@ class URXVTImageDisplayer(ImageDisplayer, FileManagerAware):
             return self._get_centered_offsets()
 
         pct_x = 100  # Right-aligned.
-        pct_y = 2    # TODO: Use the font size to calculate this offset.
+        pct_y = 2  # TODO: Use the font size to calculate this offset.
         return pct_x, pct_y
 
     def draw(self, path, start_x, start_y, width, height):
@@ -492,11 +500,7 @@ class URXVTImageDisplayer(ImageDisplayer, FileManagerAware):
         sys.stdout.flush()
 
     def clear(self, start_x, start_y, width, height):
-        sys.stdout.write(
-            self.display_protocol
-            + ";100x100+1000+1000"
-            + self.close_protocol
-        )
+        sys.stdout.write(self.display_protocol + ";100x100+1000+1000" + self.close_protocol)
         sys.stdout.flush()
 
     def quit(self):
@@ -528,12 +532,13 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
         key: value pairs as parameters
     For more info please head over to :
         https://github.com/kovidgoyal/kitty/blob/master/graphics-protocol.asciidoc"""
-    protocol_start = b'\x1b_G'
-    protocol_end = b'\x1b\\'
+
+    protocol_start = b"\x1b_G"
+    protocol_end = b"\x1b\\"
     # we are going to use stdio in binary mode a lot, so due to py2 -> py3
     # differnces is worth to do this:
-    stdbout = getattr(sys.stdout, 'buffer', sys.stdout)
-    stdbin = getattr(sys.stdin, 'buffer', sys.stdin)
+    stdbout = getattr(sys.stdout, "buffer", sys.stdout)
+    stdbin = getattr(sys.stdin, "buffer", sys.stdin)
     # counter for image ids on kitty's end
     image_id = 0
     # we need to find out the encoding for a path string, ascii won't cut it
@@ -542,7 +547,7 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
         # throws LookupError if can't find the codec, TypeError if fsenc is None
         codecs.lookup(fsenc)
     except (LookupError, TypeError):
-        fsenc = 'utf-8'
+        fsenc = "utf-8"
 
     def __init__(self):
         # the rest of the initializations that require reading stdio or raising exceptions
@@ -556,43 +561,47 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
 
     def _late_init(self):
         # tmux
-        if 'kitty' not in os.environ['TERM']:
+        if "kitty" not in os.environ["TERM"]:
             # this doesn't seem to work, ranger-async freezes...
             # commenting out the response check does nothing
             # self.protocol_start = b'\033Ptmux;\033' + self.protocol_start
             # self.protocol_end += b'\033\\'
             raise ImgDisplayUnsupportedException(
-                'kitty previews only work in'
-                + ' kitty and outside tmux. '
-                + 'Make sure your TERM contains the string "kitty"')
+                "kitty previews only work in"
+                + " kitty and outside tmux. "
+                + 'Make sure your TERM contains the string "kitty"'
+            )
 
         # automatic check if we share the filesystem using a dummy file
         with NamedTemporaryFile() as tmpf:
             tmpf.write(bytearray([0xFF] * 3))
             tmpf.flush()
             for cmd in self._format_cmd_str(
-                    {'a': 'q', 'i': 1, 'f': 24, 't': 'f', 's': 1, 'v': 1, 'S': 3},
-                    payload=base64.standard_b64encode(tmpf.name.encode(self.fsenc))):
+                {"a": "q", "i": 1, "f": 24, "t": "f", "s": 1, "v": 1, "S": 3},
+                payload=base64.standard_b64encode(tmpf.name.encode(self.fsenc)),
+            ):
                 self.stdbout.write(cmd)
             sys.stdout.flush()
-            resp = b''
+            resp = b""
             while resp[-2:] != self.protocol_end:
                 resp += self.stdbin.read(1)
         # set the transfer method based on the response
         # if resp.find(b'OK') != -1:
-        if b'OK' in resp:
+        if b"OK" in resp:
             self.stream = False
-        elif b'EBADF' in resp:
+        elif b"EBADF" in resp:
             self.stream = True
         else:
             raise ImgDisplayUnsupportedException(
-                'kitty replied an unexpected response: {r}'.format(r=resp))
+                "kitty replied an unexpected response: {r}".format(r=resp)
+            )
 
         # get the image manipulation backend
         try:
             # pillow is the default since we are not going
             # to spawn other processes, so it _should_ be faster
             import PIL.Image
+
             self.backend = PIL.Image
         except ImportError:
             raise ImageDisplayError("Image previews in kitty require PIL (pillow)")
@@ -600,9 +609,8 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
             # replicate the functionality we use from im
 
         # get dimensions of a cell in pixels
-        ret = fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ,
-                          struct.pack('HHHH', 0, 0, 0, 0))
-        n_cols, n_rows, x_px_tot, y_px_tot = struct.unpack('HHHH', ret)
+        ret = fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, struct.pack("HHHH", 0, 0, 0, 0))
+        n_cols, n_rows, x_px_tot, y_px_tot = struct.unpack("HHHH", ret)
         self.pix_row, self.pix_col = x_px_tot // n_rows, y_px_tot // n_cols
         self.needs_late_init = False
 
@@ -611,7 +619,7 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
         # dictionary to store the command arguments for kitty
         # a is the display command, with T going for immediate output
         # i is the id entifier for the image
-        cmds = {'a': 'T', 'i': self.image_id}
+        cmds = {"a": "T", "i": self.image_id}
         # sys.stderr.write('{0}-{1}@{2}x{3}\t'.format(
         #     start_x, start_y, width, height))
 
@@ -620,7 +628,7 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
             self._late_init()
 
         with warnings.catch_warnings(record=True):  # as warn:
-            warnings.simplefilter('ignore', self.backend.DecompressionBombWarning)
+            warnings.simplefilter("ignore", self.backend.DecompressionBombWarning)
             image = self.backend.open(path)
             # TODO: find a way to send a message to the user that
             # doesn't stop the image from displaying
@@ -630,11 +638,12 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
 
         if image.width > box[0] or image.height > box[1]:
             scale = min(box[0] / image.width, box[1] / image.height)
-            image = image.resize((int(scale * image.width), int(scale * image.height)),
-                                 self.backend.LANCZOS)
+            image = image.resize(
+                (int(scale * image.width), int(scale * image.height)), self.backend.LANCZOS
+            )
 
-        if image.mode != 'RGB' and image.mode != 'RGBA':
-            image = image.convert('RGB')
+        if image.mode != "RGB" and image.mode != "RGBA":
+            image = image.convert("RGB")
         # start_x += ((box[0] - image.width) // 2) // self.pix_row
         # start_y += ((box[1] - image.height) // 2) // self.pix_col
         if self.stream:
@@ -645,29 +654,41 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
             # f: size of a pixel fragment (8bytes per color)
             # s, v: size of the image to recompose the flattened data
             # c, r: size in cells of the viewbox
-            cmds.update({'t': 'd', 'f': len(image.getbands()) * 8,
-                         's': image.width, 'v': image.height, })
-            payload = base64.standard_b64encode(
-                bytearray().join(map(bytes, image.getdata())))
+            cmds.update(
+                {
+                    "t": "d",
+                    "f": len(image.getbands()) * 8,
+                    "s": image.width,
+                    "v": image.height,
+                }
+            )
+            payload = base64.standard_b64encode(bytearray().join(map(bytes, image.getdata())))
         else:
             # put the image in a temporary png file
             # t: transmissium medium, 't' for temporary file (kitty will delete it for us)
             # f: size of a pixel fragment (100 just mean that the file is png encoded,
             #       the only format except raw RGB(A) bitmap that kitty understand)
             # c, r: size in cells of the viewbox
-            cmds.update({'t': 't', 'f': 100, })
-            with NamedTemporaryFile(prefix='ranger-async_thumb_', suffix='.png', delete=False) as tmpf:
-                image.save(tmpf, format='png', compress_level=0)
+            cmds.update(
+                {
+                    "t": "t",
+                    "f": 100,
+                }
+            )
+            with NamedTemporaryFile(
+                prefix="ranger-async_thumb_", suffix=".png", delete=False
+            ) as tmpf:
+                image.save(tmpf, format="png", compress_level=0)
                 payload = base64.standard_b64encode(tmpf.name.encode(self.fsenc))
 
         with temporarily_moved_cursor(int(start_y), int(start_x)):
             for cmd_str in self._format_cmd_str(cmds, payload=payload):
                 self.stdbout.write(cmd_str)
         # catch kitty answer before the escape codes corrupt the console
-        resp = b''
+        resp = b""
         while resp[-2:] != self.protocol_end:
             resp += self.stdbin.read(1)
-        if b'OK' in resp:
+        if b"OK" in resp:
             return
         else:
             raise ImageDisplayError('kitty replied "{r}"'.format(r=resp))
@@ -677,7 +698,7 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
         # it actually wants just to remove the previous image
         # TODO: implement this using the actual x, y, since the protocol
         #       supports it
-        cmds = {'a': 'd', 'i': self.image_id}
+        cmds = {"a": "d", "i": self.image_id}
         for cmd_str in self._format_cmd_str(cmds):
             self.stdbout.write(cmd_str)
         self.stdbout.flush()
@@ -688,21 +709,18 @@ class KittyImageDisplayer(ImageDisplayer, FileManagerAware):
         self.fm.ui.win.refresh()
 
     def _format_cmd_str(self, cmd, payload=None, max_slice_len=2048):
-        central_blk = ','.join(["{k}={v}".format(k=k, v=v)
-                                for k, v in cmd.items()]).encode('ascii')
+        central_blk = ",".join(["{k}={v}".format(k=k, v=v) for k, v in cmd.items()]).encode(
+            "ascii"
+        )
         if payload is not None:
             # we add the m key to signal a multiframe communication
             # appending the end (m=0) key to a single message has no effect
             while len(payload) > max_slice_len:
                 payload_blk, payload = payload[:max_slice_len], payload[max_slice_len:]
-                yield self.protocol_start + \
-                    central_blk + b',m=1;' + payload_blk + \
-                    self.protocol_end
-            yield self.protocol_start + \
-                central_blk + b',m=0;' + payload + \
-                self.protocol_end
+                yield self.protocol_start + central_blk + b",m=1;" + payload_blk + self.protocol_end
+            yield self.protocol_start + central_blk + b",m=0;" + payload + self.protocol_end
         else:
-            yield self.protocol_start + central_blk + b';' + self.protocol_end
+            yield self.protocol_start + central_blk + b";" + self.protocol_end
 
     def quit(self):
         # clear all remaining images, then check if all files went through or
@@ -722,7 +740,8 @@ class UeberzugImageDisplayer(ImageDisplayer):
     Ueberzug can display images in a Xorg session.
     Does not work over ssh.
     """
-    IMAGE_ID = 'preview'
+
+    IMAGE_ID = "preview"
     is_initialized = False
 
     def __init__(self):
@@ -730,33 +749,36 @@ class UeberzugImageDisplayer(ImageDisplayer):
 
     def initialize(self):
         """start ueberzug"""
-        if (self.is_initialized and self.process.poll() is None
-                and not self.process.stdin.closed):
+        if self.is_initialized and self.process.poll() is None and not self.process.stdin.closed:
             return
 
-        self.process = Popen(['ueberzug', 'layer', '--silent'], cwd=self.working_dir,
-                             stdin=PIPE, universal_newlines=True)
+        self.process = Popen(
+            ["ueberzug", "layer", "--silent"],
+            cwd=self.working_dir,
+            stdin=PIPE,
+            universal_newlines=True,
+        )
         self.is_initialized = True
 
     def _execute(self, **kwargs):
         self.initialize()
-        self.process.stdin.write(json.dumps(kwargs) + '\n')
+        self.process.stdin.write(json.dumps(kwargs) + "\n")
         self.process.stdin.flush()
 
     def draw(self, path, start_x, start_y, width, height):
         self._execute(
-            action='add',
+            action="add",
             identifier=self.IMAGE_ID,
             x=start_x,
             y=start_y,
             max_width=width,
             max_height=height,
-            path=path
+            path=path,
         )
 
     def clear(self, start_x, start_y, width, height):
         if self.process and not self.process.stdin.closed:
-            self._execute(action='remove', identifier=self.IMAGE_ID)
+            self._execute(action="remove", identifier=self.IMAGE_ID)
 
     def quit(self):
         if self.is_initialized and self.process.poll() is None:

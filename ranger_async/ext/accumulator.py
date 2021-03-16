@@ -1,13 +1,12 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 from ranger_async.ext.direction import Direction
 
 
 class Accumulator(object):
-
     def __init__(self):
         self.pointer = 0
         self.pointed_obj = None
@@ -22,7 +21,8 @@ class Accumulator(object):
             maximum=len(lst),
             override=narg,
             pagesize=self.get_height(),
-            current=self.pointer)
+            current=self.pointer,
+        )
         self.pointer = pointer
         self.correct_pointer()
         return pointer

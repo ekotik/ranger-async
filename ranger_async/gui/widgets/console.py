@@ -3,27 +3,27 @@
 
 """The Console widget implements a vim-like console"""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import curses
 import os
 import re
 from collections import deque
 
-from ranger_async import PY3
-from ranger_async.gui.widgets import Widget
-from ranger_async.ext.direction import Direction
-from ranger_async.ext.widestring import uwid, WideString
-from ranger_async.container.history import History, HistoryEmptyException
 import ranger_async
+from ranger_async import PY3
+from ranger_async.container.history import History, HistoryEmptyException
+from ranger_async.ext.direction import Direction
+from ranger_async.ext.widestring import WideString, uwid
+from ranger_async.gui.widgets import Widget
 
 
 class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
     visible = False
     last_cursor_mode = None
     history_search_pattern = None
-    prompt = ':'
-    copy = ''
+    prompt = ":"
+    copy = ""
     tab_deque = None
     original_line = None
     history = None
@@ -37,23 +37,24 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
     def __init__(self, win):
         Widget.__init__(self, win)
         self.pos = 0
-        self.line = ''
+        self.line = ""
         self.history = History(self.settings.max_console_history_size)
         # load history from files
         if not ranger_async.args.clean:
-            self.historypath = self.fm.datapath('history')
+            self.historypath = self.fm.datapath("history")
             if os.path.exists(self.historypath):
                 try:
-                    fobj = open(self.historypath, 'r')
+                    fobj = open(self.historypath, "r")
                 except OSError as ex:
-                    self.fm.notify('Failed to read history file', bad=True, exception=ex)
+                    self.fm.notify("Failed to read history file", bad=True, exception=ex)
                 else:
                     try:
                         for line in fobj:
                             self.history.add(line[:-1])
                     except UnicodeDecodeError as ex:
-                        self.fm.notify('Failed to parse corrupt history file',
-                                       bad=True, exception=ex)
+                        self.fm.notify(
+                            "Failed to parse corrupt history file", bad=True, exception=ex
+                        )
                     fobj.close()
         self.history_backup = History(self.history)
 
@@ -76,13 +77,13 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
             return
         if self.historypath:
             try:
-                fobj = open(self.historypath, 'w')
+                fobj = open(self.historypath, "w")
             except OSError as ex:
-                self.fm.notify('Failed to write history file', bad=True, exception=ex)
+                self.fm.notify("Failed to write history file", bad=True, exception=ex)
             else:
                 for entry in self.history_backup:
                     try:
-                        fobj.write(entry + '\n')
+                        fobj.write(entry + "\n")
                     except UnicodeEncodeError:
                         pass
                 fobj.close()
@@ -102,7 +103,7 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
         if self.question_queue:
             assert isinstance(self.question_queue[0], tuple)
             assert len(self.question_queue[0]) == 3
-            self.addstr(0, 0, self.question_queue[0][0][self.pos:])
+            self.addstr(0, 0, self.question_queue[0][0][self.pos :])
             return
 
         self.addstr(0, 0, self.prompt)
@@ -121,16 +122,16 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
         else:
             try:
                 x = self._calculate_offset()
-                pos = uwid(self.line[x:self.pos]) + len(self.prompt)
+                pos = uwid(self.line[x : self.pos]) + len(self.prompt)
                 move(self.y, self.x + min(self.wid - 1, pos))
             except curses.error:
                 pass
 
-    def open(self, string='', prompt=None, position=None):
+    def open(self, string="", prompt=None, position=None):
         if prompt is not None:
             assert isinstance(prompt, str)
             self.prompt = prompt
-        elif 'prompt' in self.__dict__:
+        elif "prompt" in self.__dict__:
             del self.prompt
 
         if self.last_cursor_mode is None:
@@ -148,7 +149,7 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
             self.pos = min(self.pos, position)
         self.history_backup.fast_forward()
         self.history = History(self.history_backup)
-        self.history.add('')
+        self.history.add("")
         self.wait_for_command_input = True
         return True
 
@@ -181,10 +182,10 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
 
     def clear(self):
         self.pos = 0
-        self.line = ''
+        self.line = ""
 
     def press(self, key):
-        self.fm.ui.keymaps.use_keymap('console')
+        self.fm.ui.keymaps.use_keymap("console")
         if not self.fm.ui.press(key):
             self.type_key(key)
 
@@ -288,25 +289,21 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
                 else:
                     umax = len(self.line) + 1
                 self.pos = direction.move(
-                    direction=direction.right(),
-                    minimum=0,
-                    maximum=umax,
-                    current=self.pos)
+                    direction=direction.right(), minimum=0, maximum=umax, current=self.pos
+                )
             else:
                 if self.question_queue:
-                    uchar = list(self.question_queue[0][0].decode('utf-8', 'ignore'))
-                    upos = len(self.question_queue[0][0][:self.pos].decode('utf-8', 'ignore'))
+                    uchar = list(self.question_queue[0][0].decode("utf-8", "ignore"))
+                    upos = len(self.question_queue[0][0][: self.pos].decode("utf-8", "ignore"))
                     umax = len(uchar) + 1 - self.wid
                 else:
-                    uchar = list(self.line.decode('utf-8', 'ignore'))
-                    upos = len(self.line[:self.pos].decode('utf-8', 'ignore'))
+                    uchar = list(self.line.decode("utf-8", "ignore"))
+                    upos = len(self.line[: self.pos].decode("utf-8", "ignore"))
                     umax = len(uchar) + 1
                 newupos = direction.move(
-                    direction=direction.right(),
-                    minimum=0,
-                    maximum=umax,
-                    current=upos)
-                self.pos = len(''.join(uchar[:newupos]).encode('utf-8', 'ignore'))
+                    direction=direction.right(), minimum=0, maximum=umax, current=upos
+                )
+                self.pos = len("".join(uchar[:newupos]).encode("utf-8", "ignore"))
 
     def move_word(self, **keywords):
         direction = Direction(keywords)
@@ -377,11 +374,11 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
     def delete_rest(self, direction):
         self.tab_deque = None
         if direction > 0:
-            self.copy = self.line[self.pos:]
-            self.line = self.line[:self.pos]
+            self.copy = self.line[self.pos :]
+            self.line = self.line[: self.pos]
         else:
-            self.copy = self.line[:self.pos]
-            self.line = self.line[self.pos:]
+            self.copy = self.line[: self.pos]
+            self.line = self.line[self.pos :]
             self.pos = 0
         self.on_line_change()
 
@@ -389,7 +386,7 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
         if self.pos == len(self.line):
             self.line += self.copy
         else:
-            self.line = self.line[:self.pos] + self.copy + self.line[self.pos:]
+            self.line = self.line[: self.pos] + self.copy + self.line[self.pos :]
         self.pos += len(self.copy)
         self.on_line_change()
 
@@ -397,21 +394,23 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
         if self.line:
             self.tab_deque = None
             if backward:
-                right_part = self.line[self.pos:]
+                right_part = self.line[self.pos :]
                 i = self.pos - 2
                 while i >= 0 and re.match(
-                        r'[\w\d]', self.line[i], re.UNICODE):  # pylint: disable=no-member
+                    r"[\w\d]", self.line[i], re.UNICODE
+                ):  # pylint: disable=no-member
                     i -= 1
-                self.copy = self.line[i + 1:self.pos]
-                self.line = self.line[:i + 1] + right_part
+                self.copy = self.line[i + 1 : self.pos]
+                self.line = self.line[: i + 1] + right_part
                 self.pos = i + 1
             else:
-                left_part = self.line[:self.pos]
+                left_part = self.line[: self.pos]
                 i = self.pos + 1
                 while i < len(self.line) and re.match(
-                        r'[\w\d]', self.line[i], re.UNICODE):  # pylint: disable=no-member
+                    r"[\w\d]", self.line[i], re.UNICODE
+                ):  # pylint: disable=no-member
                     i += 1
-                self.copy = self.line[self.pos:i]
+                self.copy = self.line[self.pos : i]
                 if i >= len(self.line):
                     self.line = left_part
                     self.pos = len(self.line)
@@ -428,15 +427,15 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
             return
         # Delete utf-char-wise
         if PY3:
-            left_part = self.line[:self.pos + mod]
+            left_part = self.line[: self.pos + mod]
             self.pos = len(left_part)
-            self.line = left_part + self.line[self.pos + 1:]
+            self.line = left_part + self.line[self.pos + 1 :]
         else:
-            uchar = list(self.line.decode('utf-8', 'ignore'))
-            upos = len(self.line[:self.pos].decode('utf-8', 'ignore')) + mod
-            left_part = ''.join(uchar[:upos]).encode('utf-8', 'ignore')
+            uchar = list(self.line.decode("utf-8", "ignore"))
+            upos = len(self.line[: self.pos].decode("utf-8", "ignore")) + mod
+            left_part = "".join(uchar[:upos]).encode("utf-8", "ignore")
             self.pos = len(left_part)
-            self.line = left_part + ''.join(uchar[upos + 1:]).encode('utf-8', 'ignore')
+            self.line = left_part + "".join(uchar[upos + 1 :]).encode("utf-8", "ignore")
         self.on_line_change()
 
     def transpose_subr(self, line, x, y):
@@ -446,11 +445,11 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
             self.fm.notify("Tried to transpose invalid regions.", bad=True)
             return line
 
-        line_begin = line[:x[0]]
-        word_x = line[x[0]:x[1]]
-        line_middle = line[x[1]:y[0]]
-        word_y = line[y[0]:y[1]]
-        line_end = line[y[1]:]
+        line_begin = line[: x[0]]
+        word_x = line[x[0] : x[1]]
+        line_middle = line[x[1] : y[0]]
+        word_y = line[y[0] : y[1]]
+        line_end = line[y[1] :]
 
         line = line_begin + word_y + line_middle + word_x + line_end
         return line
@@ -473,38 +472,39 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
         # like in Emacs and many terminal emulators
         if self.line:
             # If before the first word, interchange next two words
-            if not re.search(r'[\w\d]', self.line[:self.pos], re.UNICODE):
+            if not re.search(r"[\w\d]", self.line[: self.pos], re.UNICODE):
                 self.pos = self.move_by_word(self.line, self.pos, 1)
 
             # If in/after last word, interchange last two words
-            if (re.match(r'[\w\d]*\s*$', self.line[self.pos:], re.UNICODE)
-                and (re.match(r'[\w\d]', self.line[self.pos - 1], re.UNICODE)
-                     if self.pos - 1 >= 0 else True)):
+            if re.match(r"[\w\d]*\s*$", self.line[self.pos :], re.UNICODE) and (
+                re.match(r"[\w\d]", self.line[self.pos - 1], re.UNICODE)
+                if self.pos - 1 >= 0
+                else True
+            ):
                 self.pos = self.move_by_word(self.line, self.pos, -1)
 
             # Util function to increment position until out of word/whitespace
             def _traverse(line, pos, regex):
-                while pos < len(line) and re.match(
-                        regex, line[pos], re.UNICODE):
+                while pos < len(line) and re.match(regex, line[pos], re.UNICODE):
                     pos += 1
                 return pos
 
             # Calculate endpoints of target words and pass them to
             # 'self.transpose_subr'
             x_begin = self.move_by_word(self.line, self.pos, -1)
-            x_end = _traverse(self.line, x_begin, r'[\w\d]')
+            x_end = _traverse(self.line, x_begin, r"[\w\d]")
             x = x_begin, x_end
 
             y_begin = self.pos
 
             # If in middle of word, move to end
-            if re.match(r'[\w\d]', self.line[self.pos - 1], re.UNICODE):
-                y_begin = _traverse(self.line, y_begin, r'[\w\d]')
+            if re.match(r"[\w\d]", self.line[self.pos - 1], re.UNICODE):
+                y_begin = _traverse(self.line, y_begin, r"[\w\d]")
 
             # Traverse whitespace to beginning of next word
-            y_begin = _traverse(self.line, y_begin, r'\s')
+            y_begin = _traverse(self.line, y_begin, r"\s")
 
-            y_end = _traverse(self.line, y_begin, r'[\w\d]')
+            y_end = _traverse(self.line, y_begin, r"[\w\d]")
             y = y_begin, y_end
 
             self.line = self.transpose_subr(self.line, x, y)
@@ -545,7 +545,7 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
         return self.fm.commands.get_command(self.line.split()[0], abbrev=True)
 
     def _get_tab(self, tabnum):
-        if ' ' in self.line:
+        if " " in self.line:
             cmd = self._get_cmd()
             if cmd:
                 return cmd.tab(tabnum)
@@ -563,7 +563,7 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
                 self.line = tab_result
                 self.pos = len(tab_result)
                 self.on_line_change()
-            elif hasattr(tab_result, '__iter__'):
+            elif hasattr(tab_result, "__iter__"):
                 self.tab_deque = deque(tab_result)
                 self.tab_deque.appendleft(self.line)
 
@@ -599,10 +599,12 @@ class Console(Widget):  # pylint: disable=too-many-instance-attributes,too-many-
         choice is used when the user presses <ESC>.
         """
         self.question_queue.append(
-            (text, callback, choices if choices is not None else ['y', 'n']))
+            (text, callback, choices if choices is not None else ["y", "n"])
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
     import sys
+
     sys.exit(doctest.testmod()[0])

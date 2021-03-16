@@ -1,4 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import os
 import time
@@ -51,6 +51,7 @@ def testbookmarks(tmpdir):
 
     def crash():
         raise OutOfDateException("Don't access me")
+
     secondstore.update = crash
     secondstore.update_if_outdated()
 

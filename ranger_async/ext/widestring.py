@@ -2,7 +2,7 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import sys
 from unicodedata import east_asian_width
@@ -12,13 +12,13 @@ from ranger_async import PY3
 ASCIIONLY = set(chr(c) for c in range(1, 128))
 NARROW = 1
 WIDE = 2
-WIDE_SYMBOLS = set('WF')
+WIDE_SYMBOLS = set("WF")
 
 
 def uwid(string):
     """Return the width of a string"""
     if not PY3:
-        string = string.decode('utf-8', 'ignore')
+        string = string.decode("utf-8", "ignore")
     return sum(utf_char_width(c) for c in string)
 
 
@@ -38,32 +38,31 @@ def string_to_charlist(string):
         for char in string:
             result.append(char)
             if east_asian_width(char) in WIDE_SYMBOLS:
-                result.append('')
+                result.append("")
     else:
         try:
             # This raised a "UnicodeEncodeError: 'ascii' codec can't encode
             # character u'\xe4' in position 10: ordinal not in range(128)"
             # for me once.  I thought errors='ignore' means IGNORE THE DAMN
             # ERRORS but apparently it doesn't.
-            string = string.decode('utf-8', 'ignore')
+            string = string.decode("utf-8", "ignore")
         except UnicodeEncodeError:
             return []
         for char in string:
-            result.append(char.encode('utf-8'))
+            result.append(char.encode("utf-8"))
             if east_asian_width(char) in WIDE_SYMBOLS:
-                result.append('')
+                result.append("")
     return result
 
 
 class WideString(object):  # pylint: disable=too-few-public-methods
-
     def __init__(self, string, chars=None):
         try:
             self.string = str(string)
         except UnicodeEncodeError:
             # Here I assume that string is a "unicode" object, because why else
             # would str(string) raise a UnicodeEncodeError?
-            self.string = string.encode('latin-1', 'ignore')
+            self.string = string.encode("latin-1", "ignore")
         if chars is None:
             self.chars = string_to_charlist(string)
         else:
@@ -99,7 +98,7 @@ class WideString(object):  # pylint: disable=too-few-public-methods
         return self.string
 
     def __repr__(self):
-        return '<' + self.__class__.__name__ + " '" + self.string + "'>"
+        return "<" + self.__class__.__name__ + " '" + self.string + "'>"
 
     def __getslice__(self, start, stop):
         """
@@ -132,13 +131,13 @@ class WideString(object):  # pylint: disable=too-few-public-methods
             return WideString("")
         if start is None or start < 0:
             start = 0
-        if stop < len(self.chars) and self.chars[stop] == '':
-            if self.chars[start] == '':
-                return WideString(' ' + ''.join(self.chars[start:stop - 1]) + ' ')
-            return WideString(''.join(self.chars[start:stop - 1]) + ' ')
-        if self.chars[start] == '':
-            return WideString(' ' + ''.join(self.chars[start:stop - 1]))
-        return WideString(''.join(self.chars[start:stop]))
+        if stop < len(self.chars) and self.chars[stop] == "":
+            if self.chars[start] == "":
+                return WideString(" " + "".join(self.chars[start : stop - 1]) + " ")
+            return WideString("".join(self.chars[start : stop - 1]) + " ")
+        if self.chars[start] == "":
+            return WideString(" " + "".join(self.chars[start : stop - 1]))
+        return WideString("".join(self.chars[start:stop]))
 
     def __getitem__(self, i):
         """
@@ -163,6 +162,7 @@ class WideString(object):  # pylint: disable=too-few-public-methods
         return len(self.chars)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
+
     sys.exit(doctest.testmod()[0])

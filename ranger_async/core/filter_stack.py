@@ -3,9 +3,10 @@
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 # Author: Wojciech Siewierski <wojciech.siewierski@onet.pl>, 2018
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import re
+
 # pylint: disable=invalid-name
 try:
     from itertools import izip_longest as zip_longest
@@ -14,7 +15,7 @@ except ImportError:
 # pylint: enable=invalid-name
 from os.path import abspath
 
-from ranger_async.container.directory import accept_file, InodeFilterConstants
+from ranger_async.container.directory import InodeFilterConstants, accept_file
 from ranger_async.core.shared import FileManagerAware
 from ranger_async.ext.hash import hash_chunks
 
@@ -34,6 +35,7 @@ def stack_filter(filter_name):
     def decorator(cls):
         SIMPLE_FILTERS[filter_name] = cls
         return cls
+
     return decorator
 
 
@@ -41,6 +43,7 @@ def filter_combinator(combinator_name):
     def decorator(cls):
         FILTER_COMBINATORS[combinator_name] = cls
         return cls
+
     return decorator
 
 
@@ -88,9 +91,7 @@ class HashFilter(BaseFilter, FileManagerAware):
         self.filehash = list(hash_chunks(abspath(self.filepath)))
 
     def __call__(self, fobj):
-        for (chunk1, chunk2) in zip_longest(self.filehash,
-                                            hash_chunks(fobj.path),
-                                            fillvalue=''):
+        for (chunk1, chunk2) in zip_longest(self.filehash, hash_chunks(fobj.path), fillvalue=""):
             if chunk1 != chunk2:
                 return False
         return True
@@ -174,12 +175,9 @@ class UniqueFilter(BaseFilter, FileManagerAware):
 @stack_filter("type")
 class TypeFilter(BaseFilter):
     type_to_function = {
-        InodeFilterConstants.DIRS:
-        (lambda fobj: fobj.is_directory),
-        InodeFilterConstants.FILES:
-        (lambda fobj: fobj.is_file and not fobj.is_link),
-        InodeFilterConstants.LINKS:
-        (lambda fobj: fobj.is_link),
+        InodeFilterConstants.DIRS: (lambda fobj: fobj.is_directory),
+        InodeFilterConstants.FILES: (lambda fobj: fobj.is_file and not fobj.is_link),
+        InodeFilterConstants.LINKS: (lambda fobj: fobj.is_link),
     }
 
     def __init__(self, filetype):
@@ -209,14 +207,11 @@ class OrFilter(BaseFilter):
         # De Morgan's laws.
         return not accept_file(
             fobj,
-            ((lambda x, f=filt: not f(x))
-             for filt
-             in self.subfilters),
+            ((lambda x, f=filt: not f(x)) for filt in self.subfilters),
         )
 
     def __str__(self):
-        return "<Filter: {comp}>".format(
-            comp=" or ".join(map(str, self.subfilters)))
+        return "<Filter: {comp}>".format(comp=" or ".join(map(str, self.subfilters)))
 
     def decompose(self):
         return self.subfilters
@@ -236,8 +231,7 @@ class AndFilter(BaseFilter):
         return accept_file(fobj, self.subfilters)
 
     def __str__(self):
-        return "<Filter: {comp}>".format(
-            comp=" and ".join(map(str, self.subfilters)))
+        return "<Filter: {comp}>".format(comp=" and ".join(map(str, self.subfilters)))
 
     def decompose(self):
         return self.subfilters

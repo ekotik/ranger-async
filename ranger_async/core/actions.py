@@ -3,21 +3,21 @@
 
 # pylint: disable=too-many-lines,attribute-defined-outside-init
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import codecs
 import os
-from os import link, symlink, listdir, stat
-from os.path import join, isdir, realpath, exists
 import re
 import shlex
 import shutil
 import string
 import tempfile
-from inspect import cleandoc
-from stat import S_IEXEC
 from hashlib import sha512
+from inspect import cleandoc
 from logging import getLogger
+from os import link, listdir, stat, symlink
+from os.path import exists, isdir, join, realpath
+from stat import S_IEXEC
 
 import ranger_async
 from ranger_async import PY3
@@ -29,11 +29,11 @@ from ranger_async.core.shared import FileManagerAware, SettingsAware
 from ranger_async.core.tab import Tab
 from ranger_async.ext.direction import Direction
 from ranger_async.ext.get_executables import get_executables
-from ranger_async.ext.keybinding_parser import key_to_string, construct_keybinding
-from ranger_async.ext.macrodict import MacroDict, MACRO_FAIL, macro_val
+from ranger_async.ext.keybinding_parser import construct_keybinding, key_to_string
+from ranger_async.ext.macrodict import MACRO_FAIL, MacroDict, macro_val
 from ranger_async.ext.next_available_filename import next_available_filename
 from ranger_async.ext.relative_symlink import relative_symlink
-from ranger_async.ext.rifle import squash_flags, ASK_COMMAND
+from ranger_async.ext.rifle import ASK_COMMAND, squash_flags
 from ranger_async.ext.safe_path import get_safe_path
 from ranger_async.ext.shell_escape import shell_quote
 
@@ -42,12 +42,14 @@ LOG = getLogger(__name__)
 
 class _MacroTemplate(string.Template):
     """A template for substituting macros in commands"""
+
     delimiter = ranger_async.MACRO_DELIMITER
     idpattern = r"[_a-z0-9]*"
 
 
 class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-methods
-        FileManagerAware, SettingsAware):
+    FileManagerAware, SettingsAware
+):
 
     # --------------------------
     # -- Basic Commands
@@ -70,7 +72,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         self.previews = {}
         self.garbage_collect(-1)
         self.enter_dir(old_path)
-        self.change_mode('normal')
+        self.change_mode("normal")
         if self.metadata:
             self.metadata.reset()
         self.rifle.reload_config()
@@ -82,17 +84,17 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         Change mode to "visual" (selection) or "normal" mode.
         """
         if mode is None:
-            self.fm.notify('Syntax: change_mode <mode>', bad=True)
+            self.fm.notify("Syntax: change_mode <mode>", bad=True)
             return
         if mode == self.mode:  # pylint: disable=access-member-before-definition
             return
-        if mode == 'visual':
+        if mode == "visual":
             self._visual_pos_start = self.thisdir.pointer
             self._visual_move_cycles = 0
             self._previous_selection = set(self.thisdir.marked_items)
             self.mark_files(val=not self._visual_reverse, movedown=False)
-        elif mode == 'normal':
-            if self.mode == 'visual':  # pylint: disable=access-member-before-definition
+        elif mode == "normal":
+            if self.mode == "visual":  # pylint: disable=access-member-before-definition
                 self._visual_pos_start = None
                 self._visual_move_cycles = None
                 self._previous_selection = None
@@ -107,18 +109,18 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         if not isinstance(value, str):
             raise ValueError("The value for an option needs to be a string.")
 
-        self.settings.set(option_name, self._parse_option_value(option_name, value),
-                          localpath, tags)
+        self.settings.set(
+            option_name, self._parse_option_value(option_name, value), localpath, tags
+        )
 
-    def _parse_option_value(  # pylint: disable=too-many-return-statements
-            self, name, value):
+    def _parse_option_value(self, name, value):  # pylint: disable=too-many-return-statements
         types = self.fm.settings.types_of(name)
         if bool in types:
-            if value.lower() in ('false', 'off', '0'):
+            if value.lower() in ("false", "off", "0"):
                 return False
-            elif value.lower() in ('true', 'on', '1'):
+            elif value.lower() in ("true", "on", "1"):
                 return True
-        if isinstance(None, types) and value.lower() == 'none':
+        if isinstance(None, types) and value.lower() == "none":
             return None
         if int in types:
             try:
@@ -133,7 +135,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         if str in types:
             return value
         if list in types:
-            return value.split(',')
+            return value.split(",")
         raise ValueError("Invalid value `%s' for option `%s'!" % (name, value))
 
     def toggle_visual_mode(self, reverse=False, narg=None):
@@ -141,13 +143,13 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
 
         Toggle the visual mode (see :change_mode).
         """
-        if self.mode == 'normal':
+        if self.mode == "normal":
             self._visual_reverse = reverse
             if narg is not None:
                 self.mark_files(val=not reverse, narg=narg)
-            self.change_mode('visual')
+            self.change_mode("visual")
         else:
-            self.change_mode('normal')
+            self.change_mode("normal")
 
     def reload_cwd(self):
         """:reload_cwd
@@ -177,7 +179,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
 
         text = str(obj)
 
-        text_log = 'Notification: {0}'.format(text)
+        text_log = "Notification: {0}".format(text)
         if bad:
             LOG.error(text_log)
         else:
@@ -186,8 +188,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             LOG.exception(exception)
 
         if self.ui and self.ui.is_on:
-            self.ui.status.notify("  ".join(text.split("\n")),
-                                  duration=duration, bad=bad)
+            self.ui.status.notify("  ".join(text.split("\n")), duration=duration, bad=bad)
         else:
             print(text)
 
@@ -217,17 +218,19 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         """
         self.ui.redraw_window()
 
-    def open_console(self, string='',  # pylint: disable=redefined-outer-name
-                     prompt=None, position=None):
+    def open_console(
+        self, string="", prompt=None, position=None  # pylint: disable=redefined-outer-name
+    ):
         """:open_console [string]
 
         Open the console.
         """
-        self.change_mode('normal')
+        self.change_mode("normal")
         self.ui.open_console(string, prompt=prompt, position=position)
 
-    def execute_console(self, string='',  # pylint: disable=redefined-outer-name
-                        wildcards=None, quantifier=None):
+    def execute_console(
+        self, string="", wildcards=None, quantifier=None  # pylint: disable=redefined-outer-name
+    ):
         """:execute_console [string]
 
         Execute a command for the console
@@ -240,26 +243,30 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         cmd = cmd_class(string, quantifier=quantifier)
 
         if cmd.resolve_macros and _MacroTemplate.delimiter in cmd.line:
+
             def any_macro(i, char):
-                return ('any{0:d}'.format(i), key_to_string(char))
+                return ("any{0:d}".format(i), key_to_string(char))
 
             def anypath_macro(i, char):
                 try:
                     val = self.fm.bookmarks[key_to_string(char)]
                 except KeyError:
                     val = MACRO_FAIL
-                return ('any_path{0:d}'.format(i), val)
+                return ("any_path{0:d}".format(i), val)
 
-            macros = dict(f(i, char) for f in (any_macro, anypath_macro)
-                          for i, char in enumerate(wildcards if wildcards
-                                                   is not None else []))
-            if 'any0' in macros:
-                macros['any'] = macros['any0']
-                if 'any_path0' in macros:
-                    macros['any_path'] = macros['any_path0']
+            macros = dict(
+                f(i, char)
+                for f in (any_macro, anypath_macro)
+                for i, char in enumerate(wildcards if wildcards is not None else [])
+            )
+            if "any0" in macros:
+                macros["any"] = macros["any0"]
+                if "any_path0" in macros:
+                    macros["any_path"] = macros["any_path0"]
             try:
-                line = self.substitute_macros(cmd.line, additional=macros,
-                                              escape=cmd.escape_macros_for_shell)
+                line = self.substitute_macros(
+                    cmd.line, additional=macros, escape=cmd.escape_macros_for_shell
+                )
             except ValueError as ex:
                 if ranger_async.args.debug:
                     raise
@@ -274,8 +281,9 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             self.notify(ex)
         return None
 
-    def substitute_macros(self, string,  # pylint: disable=redefined-outer-name
-                          additional=None, escape=False):
+    def substitute_macros(
+        self, string, additional=None, escape=False  # pylint: disable=redefined-outer-name
+    ):
         macros = self.get_macros()
         if additional:
             macros.update(additional)
@@ -297,27 +305,27 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
     def get_macros(self):
         macros = MacroDict()
 
-        macros['ranger-asyncdir'] = ranger_async.RANGER_ASYNCDIR
+        macros["ranger-asyncdir"] = ranger_async.RANGER_ASYNCDIR
         if not ranger_async.args.clean:
-            macros['confdir'] = self.fm.confpath()
-            macros['datadir'] = self.fm.datapath()
-        macros['space'] = ' '
+            macros["confdir"] = self.fm.confpath()
+            macros["datadir"] = self.fm.datapath()
+        macros["space"] = " "
 
-        macros['f'] = lambda: self.fm.thisfile.relative_path
+        macros["f"] = lambda: self.fm.thisfile.relative_path
 
-        macros['p'] = lambda: [os.path.join(self.fm.thisdir.path,
-                                            fl.relative_path) for fl in
-                               self.fm.thistab.get_selection()]
-        macros['s'] = lambda: [fl.relative_path for fl in
-                               self.fm.thistab.get_selection()]
+        macros["p"] = lambda: [
+            os.path.join(self.fm.thisdir.path, fl.relative_path)
+            for fl in self.fm.thistab.get_selection()
+        ]
+        macros["s"] = lambda: [fl.relative_path for fl in self.fm.thistab.get_selection()]
 
-        macros['c'] = lambda: [fl.path for fl in self.fm.copy_buffer]
+        macros["c"] = lambda: [fl.path for fl in self.fm.copy_buffer]
 
-        macros['t'] = lambda: [fl.relative_path for fl in
-                               self.fm.thisdir.files if fl.realpath in
-                               self.fm.tags or []]
+        macros["t"] = lambda: [
+            fl.relative_path for fl in self.fm.thisdir.files if fl.realpath in self.fm.tags or []
+        ]
 
-        macros['d'] = macro_val(lambda: self.fm.thisdir.path, fallback='.')
+        macros["d"] = macro_val(lambda: self.fm.thisdir.path, fallback=".")
 
         # define d/f/p/s macros for each tab
         for i in range(1, 10):
@@ -330,12 +338,12 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             if not tabdir:
                 continue
             i = str(i)
-            macros[i + 'd'] = lambda: tabdir.path
-            macros[i + 'p'] = lambda: [os.path.join(tabdir.path,
-                                                    fl.relative_path) for fl in
-                                       tabdir.get_selection()]
-            macros[i + 's'] = lambda: [fl.path for fl in tabdir.get_selection()]
-            macros[i + 'f'] = lambda: tabdir.pointed_obj.path
+            macros[i + "d"] = lambda: tabdir.path
+            macros[i + "p"] = lambda: [
+                os.path.join(tabdir.path, fl.relative_path) for fl in tabdir.get_selection()
+            ]
+            macros[i + "s"] = lambda: [fl.path for fl in tabdir.get_selection()]
+            macros[i + "f"] = lambda: tabdir.pointed_obj.path
 
         # define D/F/P/S for the next tab
         found_current_tab = False
@@ -356,11 +364,12 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         except AttributeError:
             return macros
 
-        macros['D'] = lambda: str(next_tab_dir.path)
-        macros['F'] = lambda: next_tab.thisfile.path
-        macros['P'] = lambda: [os.path.join(next_tab.path, fl.path)
-                               for fl in next_tab.get_selection()]
-        macros['S'] = lambda: [fl.path for fl in next_tab.get_selection()]
+        macros["D"] = lambda: str(next_tab_dir.path)
+        macros["F"] = lambda: next_tab.thisfile.path
+        macros["P"] = lambda: [
+            os.path.join(next_tab.path, fl.path) for fl in next_tab.get_selection()
+        ]
+        macros["S"] = lambda: [fl.path for fl in next_tab.get_selection()]
 
         return macros
 
@@ -371,7 +380,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         """
         filename = os.path.expanduser(filename)
         LOG.debug("Sourcing config file '%s'", filename)
-        with open(filename, 'r') as fobj:
+        with open(filename, "r") as fobj:
             for line in fobj:
                 line = line.strip(" \r\n")
                 if line.startswith("#") or not line.strip():
@@ -381,7 +390,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                 except Exception as ex:  # pylint: disable=broad-except
                     if ranger_async.args.debug:
                         raise
-                    self.notify('Error in line `%s\':\n  %s' % (line, str(ex)), bad=True)
+                    self.notify("Error in line `%s':\n  %s" % (line, str(ex)), bad=True)
 
     def execute_file(self, files, **kw):  # pylint: disable=too-many-branches
         """Uses the "rifle" module to open/execute a file
@@ -396,12 +405,12 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         mimetype: pass the mimetype to rifle, overriding its own guess
         """
 
-        mode = kw['mode'] if 'mode' in kw else 0
+        mode = kw["mode"] if "mode" in kw else 0
 
         # ranger-async can act as a file chooser when running with --choosefile=...
-        if mode == 0 and 'label' not in kw:
+        if mode == 0 and "label" not in kw:
             if ranger_async.args.choosefile:
-                with open(ranger_async.args.choosefile, 'w') as fobj:
+                with open(ranger_async.args.choosefile, "w") as fobj:
                     fobj.write(self.fm.thisfile.path)
 
             if ranger_async.args.choosefiles:
@@ -412,8 +421,8 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                             paths += [fobj.path]
                 paths += [f.path for f in self.fm.thistab.get_selection() if f.path not in paths]
 
-                with open(ranger_async.args.choosefiles, 'w') as fobj:
-                    fobj.write('\n'.join(paths) + '\n')
+                with open(ranger_async.args.choosefiles, "w") as fobj:
+                    fobj.write("\n".join(paths) + "\n")
 
             if ranger_async.args.choosefile or ranger_async.args.choosefiles:
                 raise SystemExit
@@ -423,16 +432,17 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         elif not isinstance(files, (list, tuple)):
             files = [files]
 
-        flags = kw.get('flags', '')
-        if 'c' in squash_flags(flags):
+        flags = kw.get("flags", "")
+        if "c" in squash_flags(flags):
             files = [self.fm.thisfile]
 
-        self.signal_emit('execute.before', keywords=kw)
+        self.signal_emit("execute.before", keywords=kw)
         filenames = [f.path for f in files]
-        label = kw.get('label', kw.get('app', None))
+        label = kw.get("label", kw.get("app", None))
 
         def execute():
             return self.rifle.execute(filenames, mode, label, flags, None)
+
         try:
             return execute()
         except OSError as err:
@@ -448,14 +458,17 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             else:
                 raise
         finally:
-            self.signal_emit('execute.after')
+            self.signal_emit("execute.after")
 
     # --------------------------
     # -- Moving Around
     # --------------------------
 
-    def move(self,  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-             narg=None, **kw):
+    def move(
+        self,  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+        narg=None,
+        **kw
+    ):
         """A universal movement method.
 
         Accepts these parameters:
@@ -471,26 +484,26 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         self.move(to=80, percentage=True)  # moves to 80%
         """
         cwd = self.thisdir
-        kw.setdefault('cycle', self.fm.settings['wrap_scroll'])
-        kw.setdefault('one_indexed', self.fm.settings['one_indexed'])
+        kw.setdefault("cycle", self.fm.settings["wrap_scroll"])
+        kw.setdefault("one_indexed", self.fm.settings["one_indexed"])
         direction = Direction(kw)
-        if 'left' in direction or direction.left() > 0:
+        if "left" in direction or direction.left() > 0:
             steps = direction.left()
             if narg is not None:
                 steps *= narg
-            directory = os.path.join(*(['..'] * steps))
+            directory = os.path.join(*([".."] * steps))
             self.thistab.enter_dir(directory)
-            self.change_mode('normal')
+            self.change_mode("normal")
 
         if not cwd or not cwd.accessible or not cwd.content_loaded:
             return
 
-        if 'right' in direction:
+        if "right" in direction:
             mode = 0
             if narg is not None:
                 mode = narg
             tfile = self.thisfile
-            if kw.get('selection', True):
+            if kw.get("selection", True):
                 selection = self.thistab.get_selection()
             else:
                 selection = [tfile]
@@ -501,32 +514,35 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             elif selection:
                 result = self.execute_file(selection, mode=mode)
                 if result in (False, ASK_COMMAND):
-                    self.open_console('open_with ')
+                    self.open_console("open_with ")
         elif direction.vertical() and cwd.files:
             pos_new = direction.move(
                 direction=direction.down(),
                 override=narg,
                 maximum=len(cwd),
                 current=cwd.pointer,
-                pagesize=self.ui.browser.hei)
+                pagesize=self.ui.browser.hei,
+            )
             cwd.move(to=pos_new)
-            if self.mode == 'visual':
+            if self.mode == "visual":
                 pos_start = min(self._visual_pos_start, (len(cwd.files) - 1))
                 self._visual_move_cycles += direction.move_cycles()
 
                 # Haven't cycled
                 if self._visual_move_cycles == 0:
-                    targets = set(cwd.files[min(pos_start, pos_new):(max(pos_start, pos_new) + 1)])
+                    targets = set(
+                        cwd.files[min(pos_start, pos_new) : (max(pos_start, pos_new) + 1)]
+                    )
                 # Cycled down once
                 elif self._visual_move_cycles == 1:
                     if pos_new < pos_start:
-                        targets = set(cwd.files[:(pos_new + 1)] + cwd.files[pos_start:])
+                        targets = set(cwd.files[: (pos_new + 1)] + cwd.files[pos_start:])
                     else:
                         targets = set(cwd.files)
                 # Cycled up once
                 elif self._visual_move_cycles == -1:
                     if pos_new > pos_start:
-                        targets = set(cwd.files[:(pos_start + 1)] + cwd.files[pos_new:])
+                        targets = set(cwd.files[: (pos_start + 1)] + cwd.files[pos_new:])
                     else:
                         targets = set(cwd.files)
                 # Cycled more than once
@@ -550,7 +566,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                 self.display_file()
 
     def move_parent(self, n, narg=None):
-        self.change_mode('normal')
+        self.change_mode("normal")
         if narg is not None:
             n *= narg
         parent = self.thistab.at_level(-1)
@@ -582,10 +598,10 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         """Enter the directory at the given path"""
         cwd = self.thisdir
         # csh variable is lowercase
-        cdpath = os.environ.get('CDPATH', None) or os.environ.get('cdpath', None)
+        cdpath = os.environ.get("CDPATH", None) or os.environ.get("cdpath", None)
         result = self.thistab.enter_dir(path, history=history)
         if result is False and cdpath:
-            for comp in cdpath.split(':'):
+            for comp in cdpath.split(":"):
                 curpath = os.path.join(comp, path)
                 if os.path.isdir(curpath):
                     result = self.thistab.enter_dir(curpath, history=history)
@@ -593,7 +609,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         if cwd != self.thisdir:
             if remember:
                 self.bookmarks.remember(cwd)
-            self.change_mode('normal')
+            self.change_mode("normal")
         return result
 
     def cd(self, path, remember=True):  # pylint: disable=invalid-name
@@ -601,7 +617,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         self.enter_dir(path, remember=remember)
 
     def traverse(self):
-        self.change_mode('normal')
+        self.change_mode("normal")
         tfile = self.thisfile
         cwd = self.thisdir
         if tfile is not None and tfile.is_directory:
@@ -612,7 +628,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                 cwd = self.thisdir
                 if cwd.pointer < len(cwd) - 1:
                     break
-                if cwd.path == '/':
+                if cwd.path == "/":
                     break
             self.move(down=1)
             self.traverse()
@@ -621,7 +637,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             self.traverse()
 
     def traverse_backwards(self):
-        self.change_mode('normal')
+        self.change_mode("normal")
         if self.thisdir.pointer == 0:
             self.move(left=1)
             if self.thisdir.pointer != 0:
@@ -673,7 +689,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             file = File(os.path.expanduser(file))
         if file is None:
             return
-        self.execute_file(file, label='editor')
+        self.execute_file(file, label="editor")
 
     def toggle_option(self, string):  # pylint: disable=redefined-outer-name
         """:toggle_option <string>
@@ -689,8 +705,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                 if current not in allowed and current == "":
                     current = allowed[0]
                 if current in allowed:
-                    self.settings[string] = \
-                        allowed[(allowed.index(current) + 1) % len(allowed)]
+                    self.settings[string] = allowed[(allowed.index(current) + 1) % len(allowed)]
                 else:
                     self.settings[string] = allowed[0]
 
@@ -703,13 +718,19 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
 
     def sort(self, func=None, reverse=None):
         if reverse is not None:
-            self.settings['sort_reverse'] = bool(reverse)
+            self.settings["sort_reverse"] = bool(reverse)
 
         if func is not None:
-            self.settings['sort'] = str(func)
+            self.settings["sort"] = str(func)
 
-    def mark_files(self, all=False,  # pylint: disable=redefined-builtin,too-many-arguments
-                   toggle=False, val=None, movedown=None, narg=None):
+    def mark_files(
+        self,
+        all=False,  # pylint: disable=redefined-builtin,too-many-arguments
+        toggle=False,
+        val=None,
+        movedown=None,
+        narg=None,
+    ):
         """A wrapper for the directory.mark_xyz functions.
 
         Arguments:
@@ -742,8 +763,8 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                 cwd.toggle_all_marks()
             else:
                 cwd.mark_all(val)
-            if self.mode == 'visual':
-                self.change_mode('normal')
+            if self.mode == "visual":
+                self.change_mode("normal")
         else:
             for i in range(cwd.pointer, min(cwd.pointer + narg, len(cwd))):
                 item = cwd.files[i]
@@ -762,8 +783,9 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
     def mark_in_direction(self, val=True, dirarg=None):
         cwd = self.thisdir
         direction = Direction(dirarg)
-        pos, selected = direction.select(lst=cwd.files, current=cwd.pointer,
-                                         pagesize=self.ui.termsize[0])
+        pos, selected = direction.select(
+            lst=cwd.files, current=cwd.pointer, pagesize=self.ui.termsize[0]
+        )
         cwd.pointer = pos
         cwd.correct_pointer()
         for item in selected:
@@ -781,7 +803,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             except re.error:
                 return False
         self.thistab.last_search = text
-        self.search_next(order='search', offset=offset)
+        self.search_next(order="search", offset=offset)
         return None
 
     def search_next(self, order=None, offset=1, forward=True):
@@ -792,42 +814,57 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         else:
             self.set_search_method(order=order)
 
-        if order in ('search', 'tag'):
-            if order == 'search':
+        if order in ("search", "tag"):
+            if order == "search":
                 arg = self.thistab.last_search
                 if arg is None:
                     return False
-                if hasattr(arg, 'search'):
+                if hasattr(arg, "search"):
+
                     def fnc(obj):
                         return arg.search(obj.basename)
+
                 else:
+
                     def fnc(obj):
                         return arg in obj.basename
-            elif order == 'tag':
+
+            elif order == "tag":
+
                 def fnc(obj):
                     return obj.realpath in self.tags
 
             return self.thisdir.search_fnc(fnc=fnc, offset=offset, forward=forward)
 
-        elif order in ('size', 'mimetype', 'ctime', 'mtime', 'atime'):
+        elif order in ("size", "mimetype", "ctime", "mtime", "atime"):
             cwd = self.thisdir
             if original_order is not None or not cwd.cycle_list:
                 lst = list(cwd.files)
-                if order == 'size':
+                if order == "size":
+
                     def fnc(item):
                         return -item.size
-                elif order == 'mimetype':
+
+                elif order == "mimetype":
+
                     def fnc(item):
-                        return item.mimetype or ''
-                elif order == 'ctime':
+                        return item.mimetype or ""
+
+                elif order == "ctime":
+
                     def fnc(item):
                         return -int(item.stat and item.stat.st_ctime)
-                elif order == 'atime':
+
+                elif order == "atime":
+
                     def fnc(item):
                         return -int(item.stat and item.stat.st_atime)
-                elif order == 'mtime':
+
+                elif order == "mtime":
+
                     def fnc(item):
                         return -int(item.stat and item.stat.st_mtime)
+
                 lst.sort(key=fnc)
                 cwd.set_cycle_list(lst)
                 return cwd.cycle(forward=None)
@@ -836,7 +873,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         return None
 
     def set_search_method(self, order, forward=True):  # pylint: disable=unused-argument
-        if order in ('search', 'tag', 'size', 'mimetype', 'ctime', 'mtime', 'atime'):
+        if order in ("search", "tag", "size", "mimetype", "ctime", "mtime", "atime"):
             self.search_method = order
 
     # --------------------------
@@ -933,12 +970,12 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         except IndexError:
             self.ui.browser.draw_info = []
             return
-        programs = list(self.rifle.list_commands(
-            [target.path], None, skip_ask=True))
+        programs = list(self.rifle.list_commands([target.path], None, skip_ask=True))
         if programs:
             num_digits = max((len(str(program[0])) for program in programs))
-            program_info = ['%s | %s' % (str(program[0]).rjust(num_digits), program[1])
-                            for program in programs]
+            program_info = [
+                "%s | %s" % (str(program[0]).rjust(num_digits), program[1]) for program in programs
+            ]
             self.ui.browser.draw_info = program_info
 
     def hide_console_info(self):
@@ -965,22 +1002,21 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             return
 
         pager = self.ui.open_pager()
-        lines = cleandoc(command.__doc__).split('\n')
+        lines = cleandoc(command.__doc__).split("\n")
         pager.set_source(lines)
 
     def display_help(self):
-        if 'man' in get_executables():
-            manualpath = self.relpath('../doc/ranger-async.1')
+        if "man" in get_executables():
+            manualpath = self.relpath("../doc/ranger-async.1")
             if os.path.exists(manualpath):
-                process = self.run(['man', manualpath])
+                process = self.run(["man", manualpath])
                 if process.poll() != 16:
                     return
-            process = self.run(['man', 'ranger-async'])
+            process = self.run(["man", "ranger-async"])
             if process.poll() == 16:
                 self.notify("Could not find manpage.", bad=True)
         else:
-            self.notify("Failed to show man page, check if man is installed",
-                        bad=True)
+            self.notify("Failed to show man page, check if man is installed", bad=True)
 
     def display_log(self):
         logs = list(self.get_log())
@@ -1030,8 +1066,8 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             inode = stat(path).st_ino
         inode_path = "{0}{1}".format(str(inode), path)
         if PY3:
-            inode_path = inode_path.encode('utf-8', 'backslashreplace')
-        return '{0}.jpg'.format(sha512(inode_path).hexdigest())
+            inode_path = inode_path.encode("utf-8", "backslashreplace")
+        return "{0}.jpg".format(sha512(inode_path).hexdigest())
 
     def get_preview(self, fobj, width, height):
         # pylint: disable=too-many-return-statements,too-many-statements
@@ -1044,7 +1080,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         if not self.settings.preview_script or not self.settings.use_preview_script:
             try:
                 # XXX: properly determine file's encoding
-                return codecs.open(path, 'r', errors='ignore')
+                return codecs.open(path, "r", errors="ignore")
             # IOError for Python2, OSError for Python3
             except (IOError, OSError):
                 return None
@@ -1060,19 +1096,14 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         try:
             data = self.previews[path]
         except KeyError:
-            data = self.previews[path] = {'loading': False}
+            data = self.previews[path] = {"loading": False}
         else:
-            if data['loading']:
+            if data["loading"]:
                 return None
 
         found = data.get(
-            (-1, -1), data.get(
-                (width, -1), data.get(
-                    (-1, height), data.get(
-                        (width, height), False
-                    )
-                )
-            )
+            (-1, -1),
+            data.get((width, -1), data.get((-1, height), data.get((width, height), False))),
         )
         if found is not False:
             return found
@@ -1080,43 +1111,49 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         try:
             stat_ = os.stat(self.settings.preview_script)
         except OSError:
-            self.fm.notify("Preview script `{0}` doesn't exist!".format(
-                self.settings.preview_script), bad=True)
+            self.fm.notify(
+                "Preview script `{0}` doesn't exist!".format(self.settings.preview_script),
+                bad=True,
+            )
             return None
 
         if not stat_.st_mode & S_IEXEC:
-            self.fm.notify("Preview script `{0}` is not executable!".format(
-                self.settings.preview_script), bad=True)
+            self.fm.notify(
+                "Preview script `{0}` is not executable!".format(self.settings.preview_script),
+                bad=True,
+            )
             return None
 
-        data['loading'] = True
+        data["loading"] = True
 
-        if 'directimagepreview' in data:
-            data['foundpreview'] = True
-            data['imagepreview'] = True
+        if "directimagepreview" in data:
+            data["foundpreview"] = True
+            data["imagepreview"] = True
             pager.set_image(path)
-            data['loading'] = False
+            data["loading"] = False
             return path
 
         if not os.path.exists(ranger_async.args.cachedir):
             os.makedirs(ranger_async.args.cachedir)
         fobj.load_if_outdated()
         cacheimg = os.path.join(
-            ranger_async.args.cachedir,
-            self.sha512_encode(path, inode=fobj.stat.st_ino)
+            ranger_async.args.cachedir, self.sha512_encode(path, inode=fobj.stat.st_ino)
         )
-        if (self.settings.preview_images and os.path.isfile(cacheimg)
-                and fobj.stat.st_mtime <= os.path.getmtime(cacheimg)):
-            data['foundpreview'] = True
-            data['imagepreview'] = True
+        if (
+            self.settings.preview_images
+            and os.path.isfile(cacheimg)
+            and fobj.stat.st_mtime <= os.path.getmtime(cacheimg)
+        ):
+            data["foundpreview"] = True
+            data["imagepreview"] = True
             pager.set_image(cacheimg)
-            data['loading'] = False
+            data["loading"] = False
             return cacheimg
 
         def on_after(signal):
             rcode = signal.process.poll()
             content = signal.loader.stdout_buffer
-            data['foundpreview'] = True
+            data["foundpreview"] = True
 
             if rcode == 0:
                 data[(width, height)] = content
@@ -1127,17 +1164,17 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             elif rcode == 5:
                 data[(-1, -1)] = content
             elif rcode == 6:
-                data['imagepreview'] = True
+                data["imagepreview"] = True
             elif rcode == 7:
-                data['directimagepreview'] = True
+                data["directimagepreview"] = True
             elif rcode == 1:
                 data[(-1, -1)] = None
-                data['foundpreview'] = False
+                data["foundpreview"] = False
             elif rcode == 2:
                 text = self.read_text_file(path, 1024 * 32)
                 if not isinstance(text, str):
                     # Convert 'unicode' to 'str' in Python 2
-                    text = text.encode('utf-8')
+                    text = text.encode("utf-8")
                 data[(-1, -1)] = text
             else:
                 data[(-1, -1)] = None
@@ -1145,19 +1182,18 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             if self.thisfile and self.thisfile.realpath == path:
                 self.ui.browser.need_redraw = True
 
-            data['loading'] = False
+            data["loading"] = False
 
             pager = self.ui.get_pager()
             if self.thisfile and self.thisfile.is_file:
-                if 'imagepreview' in data:
+                if "imagepreview" in data:
                     pager.set_image(cacheimg)
                     return cacheimg
-                elif 'directimagepreview' in data:
+                elif "directimagepreview" in data:
                     pager.set_image(path)
                     return path
                 else:
-                    pager.set_source(self.thisfile.get_preview_source(
-                        pager.wid, pager.hei))
+                    pager.set_source(self.thisfile.get_preview_source(pager.wid, pager.hei))
             return None
 
         def on_destroy(signal):  # pylint: disable=unused-argument
@@ -1167,14 +1203,20 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                 pass
 
         loadable = CommandLoader(
-            args=[self.settings.preview_script, path, str(width), str(height),
-                  cacheimg, str(self.settings.preview_images)],
+            args=[
+                self.settings.preview_script,
+                path,
+                str(width),
+                str(height),
+                cacheimg,
+                str(self.settings.preview_images),
+            ],
             read=True,
             silent=True,
             descr="Getting preview of %s" % path,
         )
-        loadable.signal_bind('after', on_after)
-        loadable.signal_bind('destroy', on_destroy)
+        loadable.signal_bind("after", on_after)
+        loadable.signal_bind("destroy", on_destroy)
         self.loader.add(loadable)
 
         return None
@@ -1185,10 +1227,9 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         # Guess encoding ourselves.
         # These should be the most frequently used ones.
         # latin-1 as the last resort
-        encodings = [('utf-8', 'strict'), ('utf-16', 'strict'),
-                     ('latin-1', 'replace')]
+        encodings = [("utf-8", "strict"), ("utf-16", "strict"), ("latin-1", "replace")]
 
-        with open(path, 'rb') as fobj:
+        with open(path, "rb") as fobj:
             data = fobj.read(count)
 
         try:
@@ -1197,10 +1238,10 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             pass
         else:
             result = chardet.detect(data)
-            guessed_encoding = result['encoding']
+            guessed_encoding = result["encoding"]
             if guessed_encoding is not None:
                 # Add chardet's guess before our own.
-                encodings.insert(0, (guessed_encoding, 'replace'))
+                encodings.insert(0, (guessed_encoding, "replace"))
 
         for (encoding, error_scheme) in encodings:
             try:
@@ -1215,7 +1256,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
     # -- Tabs
     # --------------------------
     def tab_open(self, name, path=None):
-        tab_has_changed = (name != self.current_tab)
+        tab_has_changed = name != self.current_tab
         self.current_tab = name
         previous_tab = self.thistab
         try:
@@ -1238,9 +1279,9 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                 tab.enter_dir(tab.path, history=False)
 
         if tab_has_changed:
-            self.change_mode('normal')
-            self.signal_emit('tab.change', old=previous_tab, new=self.thistab)
-            self.signal_emit('tab.layoutchange')
+            self.change_mode("normal")
+            self.signal_emit("tab.change", old=previous_tab, new=self.thistab)
+            self.signal_emit("tab.layoutchange")
 
     def tab_close(self, name=None):
         if name is None:
@@ -1255,7 +1296,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         if name in self.tabs:
             del self.tabs[name]
         self.restorable_tabs.append(tab)
-        self.signal_emit('tab.layoutchange')
+        self.signal_emit("tab.layoutchange")
 
     def tab_restore(self):
         # NOTE: The name of the tab is not restored.
@@ -1268,8 +1309,8 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                     self.tabs[name] = tab
                     tab.enter_dir(tab.path, history=False)
                     self.thistab = tab
-                    self.change_mode('normal')
-                    self.signal_emit('tab.change', old=previous_tab, new=self.thistab)
+                    self.change_mode("normal")
+                    self.signal_emit("tab.change", old=previous_tab, new=self.thistab)
                     break
 
     def tab_move(self, offset, narg=None):
@@ -1335,7 +1376,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             self.current_tab = newtab_index
             self.thistab = oldtab
             self.ui.titlebar.request_redraw()
-            self.signal_emit('tab.layoutchange')
+            self.signal_emit("tab.layoutchange")
 
     def tab_switch(self, path, create_directory=False):
         """Switches to tab of given path, opening a new tab as necessary.
@@ -1401,16 +1442,16 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
     # --------------------------
 
     def _run_pager(self, path):
-        self.run(shlex.split(os.environ.get('PAGER', ranger_async.DEFAULT_PAGER)) + [path])
+        self.run(shlex.split(os.environ.get("PAGER", ranger_async.DEFAULT_PAGER)) + [path])
 
     def dump_keybindings(self, *contexts):
         if not contexts:
-            contexts = 'browser', 'console', 'pager', 'taskview'
+            contexts = "browser", "console", "pager", "taskview"
 
         temporary_file = tempfile.NamedTemporaryFile()
 
         def write(string):  # pylint: disable=redefined-outer-name
-            temporary_file.write(string.encode('utf-8'))
+            temporary_file.write(string.encode("utf-8"))
 
         def recurse(before, pointer):
             for key, value in pointer.items():
@@ -1435,14 +1476,14 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         temporary_file = tempfile.NamedTemporaryFile()
 
         def write(string):  # pylint: disable=redefined-outer-name
-            temporary_file.write(string.encode('utf-8'))
+            temporary_file.write(string.encode("utf-8"))
 
         undocumented = []
         for cmd_name in sorted(self.commands.commands):
             cmd = self.commands.commands[cmd_name]
-            if hasattr(cmd, '__doc__') and cmd.__doc__:
+            if hasattr(cmd, "__doc__") and cmd.__doc__:
                 doc = cleandoc(cmd.__doc__)
-                if doc[0] == ':':
+                if doc[0] == ":":
                     write(doc)
                     write("\n\n" + "-" * 60 + "\n")
             else:
@@ -1460,7 +1501,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         temporary_file = tempfile.NamedTemporaryFile()
 
         def write(string):  # pylint: disable=redefined-outer-name
-            temporary_file.write(string.encode('utf-8'))
+            temporary_file.write(string.encode("utf-8"))
 
         for setting in sorted(ALLOWED_SETTINGS):
             write("%30s = %s\n" % (setting, getattr(self.settings, setting)))
@@ -1481,13 +1522,13 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         self.do_cut = False
         self.ui.browser.main_column.request_redraw()
 
-    def copy(self, mode='set', narg=None, dirarg=None):
+    def copy(self, mode="set", narg=None, dirarg=None):
         """:copy [mode=set]
 
         Copy the selected items.
         Modes are: 'set', 'add', 'remove'.
         """
-        assert mode in ('set', 'add', 'remove', 'toggle')
+        assert mode in ("set", "add", "remove", "toggle")
         cwd = self.thisdir
         if not narg and not dirarg:
             selected = (fobj for fobj in self.thistab.get_selection() if fobj in cwd.files)
@@ -1498,22 +1539,27 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             else:
                 direction = Direction(dirarg)
                 offset = 1
-            pos, selected = direction.select(override=narg, lst=cwd.files, current=cwd.pointer,
-                                             pagesize=self.ui.termsize[0], offset=offset)
+            pos, selected = direction.select(
+                override=narg,
+                lst=cwd.files,
+                current=cwd.pointer,
+                pagesize=self.ui.termsize[0],
+                offset=offset,
+            )
             cwd.pointer = pos
             cwd.correct_pointer()
-        if mode == 'set':
+        if mode == "set":
             self.copy_buffer = set(selected)
-        elif mode == 'add':
+        elif mode == "add":
             self.copy_buffer.update(set(selected))
-        elif mode == 'remove':
+        elif mode == "remove":
             self.copy_buffer.difference_update(set(selected))
-        elif mode == 'toggle':
+        elif mode == "toggle":
             self.copy_buffer.symmetric_difference_update(set(selected))
         self.do_cut = False
         self.ui.browser.main_column.request_redraw()
 
-    def cut(self, mode='set', narg=None, dirarg=None):
+    def cut(self, mode="set", narg=None, dirarg=None):
         """:cut [mode=set]
 
         Cut the selected items.
@@ -1534,8 +1580,9 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                 else:
                     symlink(fobj.path, join(self.fm.thisdir.path, new_name))
             except OSError as ex:
-                self.notify('Failed to paste symlink: View log for more info',
-                            bad=True, exception=ex)
+                self.notify(
+                    "Failed to paste symlink: View log for more info", bad=True, exception=ex
+                )
 
     def paste_hardlink(self):
         for fobj in self.copy_buffer:
@@ -1543,8 +1590,9 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             try:
                 link(fobj.path, join(self.fm.thisdir.path, new_name))
             except OSError as ex:
-                self.notify('Failed to paste hardlink: View log for more info',
-                            bad=True, exception=ex)
+                self.notify(
+                    "Failed to paste hardlink: View log for more info", bad=True, exception=ex
+                )
 
     def paste_hardlinked_subtree(self):
         for fobj in self.copy_buffer:
@@ -1552,22 +1600,21 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
                 target_path = join(self.fm.thisdir.path, fobj.basename)
                 self._recurse_hardlinked_tree(fobj.path, target_path)
             except OSError as ex:
-                self.notify('Failed to paste hardlinked subtree: View log for more info',
-                            bad=True, exception=ex)
+                self.notify(
+                    "Failed to paste hardlinked subtree: View log for more info",
+                    bad=True,
+                    exception=ex,
+                )
 
     def _recurse_hardlinked_tree(self, source_path, target_path):
         if isdir(source_path):
             if not exists(target_path):
                 os.mkdir(target_path, stat(source_path).st_mode)
             for item in listdir(source_path):
-                self._recurse_hardlinked_tree(
-                    join(source_path, item),
-                    join(target_path, item))
+                self._recurse_hardlinked_tree(join(source_path, item), join(target_path, item))
         else:
-            if not exists(target_path) \
-                    or stat(source_path).st_ino != stat(target_path).st_ino:
-                link(source_path,
-                     next_available_filename(target_path))
+            if not exists(target_path) or stat(source_path).st_ino != stat(target_path).st_ino:
+                link(source_path, next_available_filename(target_path))
 
     def paste(self, overwrite=False, append=False, dest=None, make_safe_path=get_safe_path):
         """:paste
@@ -1578,12 +1625,11 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
         if dest is None:
             dest = self.thistab.path
         if isdir(dest):
-            loadable = CopyLoader(self.copy_buffer, self.do_cut, overwrite,
-                                  dest, make_safe_path)
+            loadable = CopyLoader(self.copy_buffer, self.do_cut, overwrite, dest, make_safe_path)
             self.loader.add(loadable, append=append)
             self.do_cut = False
         else:
-            self.notify('Failed to paste. The destination is invalid.', bad=True)
+            self.notify("Failed to paste. The destination is invalid.", bad=True)
 
     def delete(self, files=None):
         # XXX: warn when deleting mount points/unseen marked files?
@@ -1618,7 +1664,7 @@ class Actions(  # pylint: disable=too-many-instance-attributes,too-many-public-m
             self.notify(err)
 
     def rename(self, src, dest):
-        if hasattr(src, 'path'):
+        if hasattr(src, "path"):
             src = src.path
 
         try:

@@ -3,10 +3,10 @@
 
 # TODO: add a __getitem__ method to get the tag of a file
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
-from os.path import exists, abspath, realpath, expanduser, sep
 import string
+from os.path import abspath, exists, expanduser, realpath, sep
 
 from ranger_async import PY3
 from ranger_async.core.shared import FileManagerAware
@@ -15,7 +15,7 @@ ALLOWED_KEYS = string.ascii_letters + string.digits + string.punctuation
 
 
 class Tags(FileManagerAware):
-    default_tag = '*'
+    default_tag = "*"
 
     def __init__(self, filename):
 
@@ -33,7 +33,7 @@ class Tags(FileManagerAware):
     def add(self, *items, **others):
         if len(*items) == 0:
             return
-        tag = others.get('tag', self.default_tag)
+        tag = others.get("tag", self.default_tag)
         self.sync()
         for item in items:
             self.tags[item] = tag
@@ -53,7 +53,7 @@ class Tags(FileManagerAware):
     def toggle(self, *items, **others):
         if len(*items) == 0:
             return
-        tag = others.get('tag', self.default_tag)
+        tag = others.get("tag", self.default_tag)
         tag = str(tag)
         if tag not in ALLOWED_KEYS:
             return
@@ -76,9 +76,9 @@ class Tags(FileManagerAware):
     def sync(self):
         try:
             if PY3:
-                fobj = open(self._filename, 'r', errors='replace')
+                fobj = open(self._filename, "r", errors="replace")
             else:
-                fobj = open(self._filename, 'r')
+                fobj = open(self._filename, "r")
         except OSError as err:
             if exists(self._filename):
                 self.fm.notify(err, bad=True)
@@ -90,7 +90,7 @@ class Tags(FileManagerAware):
 
     def dump(self):
         try:
-            fobj = open(self._filename, 'w')
+            fobj = open(self._filename, "w")
         except OSError as err:
             self.fm.notify(err, bad=True)
         else:
@@ -101,15 +101,15 @@ class Tags(FileManagerAware):
         for path, tag in self.tags.items():
             if tag == self.default_tag:
                 # COMPAT: keep the old format if the default tag is used
-                fobj.write(path + '\n')
+                fobj.write(path + "\n")
             elif tag in ALLOWED_KEYS:
-                fobj.write('{0}:{1}\n'.format(tag, path))
+                fobj.write("{0}:{1}\n".format(tag, path))
 
     def _parse(self, fobj):
         result = dict()
         for line in fobj:
-            line = line.rstrip('\n')
-            if len(line) > 2 and line[1] == ':':
+            line = line.rstrip("\n")
+            if len(line) > 2 and line[1] == ":":
                 tag, path = line[0], line[2:]
                 if tag in ALLOWED_KEYS:
                     result[path] = tag
@@ -126,7 +126,7 @@ class Tags(FileManagerAware):
             if path == path_old:
                 pnew = path_new
             elif path.startswith(path_old + sep):
-                pnew = path_new + path[len(path_old):]
+                pnew = path_new + path[len(path_old) :]
             if pnew:
                 del self.tags[path]
                 self.tags[pnew] = tag
@@ -136,6 +136,7 @@ class Tags(FileManagerAware):
 
     def __nonzero__(self):
         return True
+
     __bool__ = __nonzero__
 
 

@@ -1,7 +1,7 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import curses
 
@@ -44,9 +44,11 @@ class MouseEvent(object):
         # the code for the "scroll down" button.
         if self.bstate & curses.BUTTON4_PRESSED:
             return -self.CTRL_SCROLLWHEEL_MULTIPLIER if self.ctrl() else -1
-        elif self.bstate & curses.BUTTON2_PRESSED \
-                or self.bstate & 2**21 \
-                or self.bstate > curses.ALL_MOUSE_EVENTS:
+        elif (
+            self.bstate & curses.BUTTON2_PRESSED
+            or self.bstate & 2 ** 21
+            or self.bstate > curses.ALL_MOUSE_EVENTS
+        ):
             return self.CTRL_SCROLLWHEEL_MULTIPLIER if self.ctrl() else 1
         return 0
 

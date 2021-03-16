@@ -1,7 +1,7 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import re
 from grp import getgrgid
@@ -11,15 +11,21 @@ from pwd import getpwuid
 from time import time
 
 from ranger_async.core.linemode import (
-    DEFAULT_LINEMODE, DefaultLinemode, TitleLinemode,
-    PermissionsLinemode, FileInfoLinemode, MtimeLinemode, SizeMtimeLinemode,
-    HumanReadableMtimeLinemode, SizeHumanReadableMtimeLinemode
+    DEFAULT_LINEMODE,
+    DefaultLinemode,
+    FileInfoLinemode,
+    HumanReadableMtimeLinemode,
+    MtimeLinemode,
+    PermissionsLinemode,
+    SizeHumanReadableMtimeLinemode,
+    SizeMtimeLinemode,
+    TitleLinemode,
 )
 from ranger_async.core.shared import FileManagerAware, SettingsAware
-from ranger_async.ext.shell_escape import shell_escape
 from ranger_async.ext import spawn
-from ranger_async.ext.lazy_property import lazy_property
 from ranger_async.ext.human_readable import human_readable
+from ranger_async.ext.lazy_property import lazy_property
+from ranger_async.ext.shell_escape import shell_escape
 
 # Python 2 compatibility
 try:
@@ -28,22 +34,84 @@ except AttributeError:
     from string import maketrans  # pylint: disable=no-name-in-module
 
 
-CONTAINER_EXTENSIONS = ('7z', 'ace', 'ar', 'arc', 'bz', 'bz2', 'cab', 'cpio',
-                        'cpt', 'deb', 'dgc', 'dmg', 'gz', 'iso', 'jar', 'msi',
-                        'pkg', 'rar', 'shar', 'tar', 'tbz', 'tgz', 'txz',
-                        'xar', 'xpi', 'xz', 'zip')
-DOCUMENT_EXTENSIONS = ('cbr', 'cbz', 'cfg', 'css', 'cvs', 'djvu', 'doc',
-                       'docx', 'gnm', 'gnumeric', 'htm', 'html', 'md', 'odf',
-                       'odg', 'odp', 'ods', 'odt', 'pdf', 'pod', 'ps', 'rtf',
-                       'sxc', 'txt', 'xls', 'xlw', 'xml', 'xslx')
-DOCUMENT_BASENAMES = ('bugs', 'bugs', 'changelog', 'copying', 'credits',
-                      'hacking', 'help', 'install', 'license', 'readme', 'todo')
+CONTAINER_EXTENSIONS = (
+    "7z",
+    "ace",
+    "ar",
+    "arc",
+    "bz",
+    "bz2",
+    "cab",
+    "cpio",
+    "cpt",
+    "deb",
+    "dgc",
+    "dmg",
+    "gz",
+    "iso",
+    "jar",
+    "msi",
+    "pkg",
+    "rar",
+    "shar",
+    "tar",
+    "tbz",
+    "tgz",
+    "txz",
+    "xar",
+    "xpi",
+    "xz",
+    "zip",
+)
+DOCUMENT_EXTENSIONS = (
+    "cbr",
+    "cbz",
+    "cfg",
+    "css",
+    "cvs",
+    "djvu",
+    "doc",
+    "docx",
+    "gnm",
+    "gnumeric",
+    "htm",
+    "html",
+    "md",
+    "odf",
+    "odg",
+    "odp",
+    "ods",
+    "odt",
+    "pdf",
+    "pod",
+    "ps",
+    "rtf",
+    "sxc",
+    "txt",
+    "xls",
+    "xlw",
+    "xml",
+    "xslx",
+)
+DOCUMENT_BASENAMES = (
+    "bugs",
+    "bugs",
+    "changelog",
+    "copying",
+    "credits",
+    "hacking",
+    "help",
+    "install",
+    "license",
+    "readme",
+    "todo",
+)
 
-BAD_INFO = '?'
+BAD_INFO = "?"
 
-_UNSAFE_CHARS = '\n' + ''.join(map(chr, range(32))) + ''.join(map(chr, range(128, 256)))
-_SAFE_STRING_TABLE = maketrans(_UNSAFE_CHARS, '?' * len(_UNSAFE_CHARS))
-_EXTRACT_NUMBER_RE = re.compile(r'(\d+|\D)')
+_UNSAFE_CHARS = "\n" + "".join(map(chr, range(32))) + "".join(map(chr, range(128, 256)))
+_SAFE_STRING_TABLE = maketrans(_UNSAFE_CHARS, "?" * len(_UNSAFE_CHARS))
+_EXTRACT_NUMBER_RE = re.compile(r"(\d+|\D)")
 
 
 def safe_path(path):
@@ -51,7 +119,8 @@ def safe_path(path):
 
 
 class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many-public-methods
-        FileManagerAware, SettingsAware):
+    FileManagerAware, SettingsAware
+):
     basename = None
     relative_path = None
     infostring = None
@@ -92,10 +161,17 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
     vcsremotestatus = None
 
     linemode_dict = dict(
-        (linemode.name, linemode()) for linemode in
-        [DefaultLinemode, TitleLinemode, PermissionsLinemode, FileInfoLinemode,
-         MtimeLinemode, SizeMtimeLinemode, HumanReadableMtimeLinemode,
-         SizeHumanReadableMtimeLinemode]
+        (linemode.name, linemode())
+        for linemode in [
+            DefaultLinemode,
+            TitleLinemode,
+            PermissionsLinemode,
+            FileInfoLinemode,
+            MtimeLinemode,
+            SizeMtimeLinemode,
+            HumanReadableMtimeLinemode,
+            SizeHumanReadableMtimeLinemode,
+        ]
     )
 
     def __init__(self, path, preload=None, path_is_abs=False, basename_is_rel_to=None):
@@ -116,7 +192,7 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
     @lazy_property
     def extension(self):
         try:
-            lastdot = self.basename.rindex('.') + 1
+            lastdot = self.basename.rindex(".") + 1
             return self.basename[lastdot:].lower()
         except ValueError:
             return None
@@ -134,8 +210,11 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
                     return linemode
                 if method == "path" and argument.search(self.path):
                     return linemode
-                if method == "tag" and self.realpath in self.fm.tags and \
-                        self.fm.tags.marker(self.realpath) in argument:
+                if (
+                    method == "tag"
+                    and self.realpath in self.fm.tags
+                    and self.fm.tags.marker(self.realpath) in argument
+                ):
                     return linemode
         return DEFAULT_LINEMODE
 
@@ -150,7 +229,7 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
     @lazy_property
     def filetype(self):
         try:
-            return spawn.check_output(["file", '-Lb', '--mime-type', self.path])
+            return spawn.check_output(["file", "-Lb", "--mime-type", self.path])
         except OSError:
             return ""
 
@@ -159,7 +238,7 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
         basename_list = []
         for string in _EXTRACT_NUMBER_RE.split(self.relative_path):
             try:
-                basename_list += [('0', int(string))]
+                basename_list += [("0", int(string))]
             except ValueError:
                 basename_list += [(string, 0)]
         return basename_list
@@ -169,7 +248,7 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
         basename_list = []
         for string in _EXTRACT_NUMBER_RE.split(self.relative_path_lower):
             try:
-                basename_list += [('0', int(string))]
+                basename_list += [("0", int(string))]
             except ValueError:
                 basename_list += [(string, 0)]
         return basename_list
@@ -196,9 +275,10 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
         except KeyError:
             return str(self.stat.st_gid)
 
-    for attr in ('video', 'audio', 'image', 'media', 'document', 'container'):
+    for attr in ("video", "audio", "image", "media", "document", "container"):
         exec(  # pylint: disable=exec-used
-            "%s = lazy_property(lambda self: self.set_mimetype() or self.%s)" % (attr, attr))
+            "%s = lazy_property(lambda self: self.set_mimetype() or self.%s)" % (attr, attr)
+        )
 
     def __str__(self):
         """returns a string containing the absolute path"""
@@ -213,28 +293,30 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
     def set_mimetype(self):
         """assign attributes such as self.video according to the mimetype"""
         bname = self.basename
-        if self.extension == 'part':
+        if self.extension == "part":
             bname = bname[0:-5]
         # pylint: disable=attribute-defined-outside-init
         self._mimetype = self.fm.mimetypes.guess_type(bname, False)[0]
         if self._mimetype is None:
-            self._mimetype = ''
+            self._mimetype = ""
         # pylint: enable=attribute-defined-outside-init
 
-        self.video = self._mimetype.startswith('video')
-        self.image = self._mimetype.startswith('image')
-        self.audio = self._mimetype.startswith('audio')
+        self.video = self._mimetype.startswith("video")
+        self.image = self._mimetype.startswith("image")
+        self.audio = self._mimetype.startswith("audio")
         self.media = self.video or self.image or self.audio
-        self.document = self._mimetype.startswith('text') \
-            or self.extension in DOCUMENT_EXTENSIONS \
+        self.document = (
+            self._mimetype.startswith("text")
+            or self.extension in DOCUMENT_EXTENSIONS
             or self.basename.lower() in DOCUMENT_BASENAMES
+        )
         self.container = self.extension in CONTAINER_EXTENSIONS
 
         # pylint: disable=attribute-defined-outside-init
-        keys = ('video', 'audio', 'image', 'media', 'document', 'container')
+        keys = ("video", "audio", "image", "media", "document", "container")
         self._mimetype_tuple = tuple(key for key in keys if getattr(self, key))
 
-        if self._mimetype == '':
+        if self._mimetype == "":
             self._mimetype = None
         # pylint: enable=attribute-defined-outside-init
 
@@ -316,24 +398,24 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
         if fmt in (0o020000, 0o060000):  # stat.S_IFCHR/BLK
             self.is_device = True
             self.size = 0
-            self.infostring = 'dev'
+            self.infostring = "dev"
         elif fmt == 0o010000:  # stat.S_IFIFO
             self.is_fifo = True
             self.size = 0
-            self.infostring = 'fifo'
+            self.infostring = "fifo"
         elif fmt == 0o140000:  # stat.S_IFSOCK
             self.is_socket = True
             self.size = 0
-            self.infostring = 'sock'
+            self.infostring = "sock"
         elif self.is_file:
             if new_stat:
                 self.size = new_stat.st_size
-                self.infostring = ' ' + human_readable(self.size)
+                self.infostring = " " + human_readable(self.size)
             else:
                 self.size = 0
-                self.infostring = '?'
+                self.infostring = "?"
         if self.is_link and not self.is_directory:
-            self.infostring = '->' + self.infostring
+            self.infostring = "->" + self.infostring
 
         self.stat = new_stat
         self.last_load_time = time()
@@ -343,11 +425,11 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
             return self.permissions
 
         if self.is_link:
-            perms = ['l']
+            perms = ["l"]
         elif self.is_directory:
-            perms = ['d']
+            perms = ["d"]
         else:
-            perms = ['-']
+            perms = ["-"]
 
         mode = self.stat.st_mode
         test = 0o0400
@@ -356,10 +438,10 @@ class FileSystemObject(  # pylint: disable=too-many-instance-attributes,too-many
                 if mode & test:
                     perms.append(what)
                 else:
-                    perms.append('-')
+                    perms.append("-")
                 test >>= 1
 
-        self.permissions = ''.join(perms)
+        self.permissions = "".join(perms)
         return self.permissions
 
     def load_if_outdated(self):

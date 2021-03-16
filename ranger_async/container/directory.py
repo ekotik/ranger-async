@@ -1,24 +1,25 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import locale
 import os.path
-from os import stat as os_stat, lstat as os_lstat
 import random
 import re
 from collections import deque
+from os import lstat as os_lstat
+from os import stat as os_stat
 from time import time
 
-from ranger_async.container.fsobject import BAD_INFO, FileSystemObject
-from ranger_async.core.loader import Loadable
-from ranger_async.ext.mount_path import mount_path
 from ranger_async.container.file import File
-from ranger_async.ext.accumulator import Accumulator
-from ranger_async.ext.lazy_property import lazy_property
-from ranger_async.ext.human_readable import human_readable
+from ranger_async.container.fsobject import BAD_INFO, FileSystemObject
 from ranger_async.container.settings import LocalSettings
+from ranger_async.core.loader import Loadable
+from ranger_async.ext.accumulator import Accumulator
+from ranger_async.ext.human_readable import human_readable
+from ranger_async.ext.lazy_property import lazy_property
+from ranger_async.ext.mount_path import mount_path
 from ranger_async.ext.vcs import Vcs
 
 
@@ -48,12 +49,14 @@ def sort_naturally_icase(path):
 def sort_unicode_wrapper_string(old_sort_func):
     def sort_unicode(path):
         return locale.strxfrm(old_sort_func(path))
+
     return sort_unicode
 
 
 def sort_unicode_wrapper_list(old_sort_func):
     def sort_unicode(path):
         return [locale.strxfrm(str(c)) for c in old_sort_func(path)]
+
     return sort_unicode
 
 
@@ -87,20 +90,24 @@ def walklevel(some_dir, level):
 def mtimelevel(path, level):
     mtime = os.stat(path).st_mtime
     for dirpath, dirnames, _ in walklevel(path, level):
-        dirlist = [os.path.join("/", dirpath, d) for d in dirnames
-                   if level == -1 or dirpath.count(os.path.sep) - path.count(os.path.sep) <= level]
+        dirlist = [
+            os.path.join("/", dirpath, d)
+            for d in dirnames
+            if level == -1 or dirpath.count(os.path.sep) - path.count(os.path.sep) <= level
+        ]
         mtime = max(mtime, max([-1] + [os.stat(d).st_mtime for d in dirlist]))
     return mtime
 
 
 class InodeFilterConstants(object):  # pylint: disable=too-few-public-methods
-    DIRS = 'd'
-    FILES = 'f'
-    LINKS = 'l'
+    DIRS = "d"
+    FILES = "f"
+    LINKS = "l"
 
 
 class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public-methods
-        FileSystemObject, Accumulator, Loadable):
+    FileSystemObject, Accumulator, Loadable
+):
     is_directory = True
     enterable = False
     load_generator = None
@@ -119,7 +126,7 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
     marked_items = None
     scroll_begin = 0
 
-    mount_path = '/'
+    mount_path = "/"
     disk_usage = 0
 
     last_update_time = -1
@@ -135,15 +142,15 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
     cumulative_size_calculated = False
 
     sort_dict = {
-        'basename': sort_by_basename,
-        'natural': sort_naturally,
-        'size': lambda path: -(path.size or 1),
-        'mtime': lambda path: -(path.stat and path.stat.st_mtime or 1),
-        'ctime': lambda path: -(path.stat and path.stat.st_ctime or 1),
-        'atime': lambda path: -(path.stat and path.stat.st_atime or 1),
-        'random': lambda path: random.random(),
-        'type': lambda path: path.mimetype or '',
-        'extension': lambda path: path.extension or '',
+        "basename": sort_by_basename,
+        "natural": sort_naturally,
+        "size": lambda path: -(path.size or 1),
+        "mtime": lambda path: -(path.stat and path.stat.st_mtime or 1),
+        "ctime": lambda path: -(path.stat and path.stat.st_ctime or 1),
+        "atime": lambda path: -(path.stat and path.stat.st_atime or 1),
+        "random": lambda path: random.random(),
+        "type": lambda path: path.mimetype or "",
+        "extension": lambda path: path.extension or "",
     }
 
     def __init__(self, path, **kw):
@@ -160,12 +167,12 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
         self._signal_functions = []
         func = self.signal_function_factory(self.sort)
         self._signal_functions += [func]
-        for opt in ('sort_directories_first', 'sort', 'sort_reverse', 'sort_case_insensitive'):
-            self.settings.signal_bind('setopt.' + opt, func, weak=True, autosort=False)
+        for opt in ("sort_directories_first", "sort", "sort_reverse", "sort_case_insensitive"):
+            self.settings.signal_bind("setopt." + opt, func, weak=True, autosort=False)
         func = self.signal_function_factory(self.refilter)
         self._signal_functions += [func]
-        for opt in ('hidden_filter', 'show_hidden'):
-            self.settings.signal_bind('setopt.' + opt, func, weak=True, autosort=False)
+        for opt in ("hidden_filter", "show_hidden"):
+            self.settings.signal_bind("setopt." + opt, func, weak=True, autosort=False)
 
         self.settings = LocalSettings(path, self.settings)
 
@@ -175,8 +182,10 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
     def vcs(self):
         if not self._vcs_signal_handler_installed:
             self.settings.signal_bind(
-                'setopt.vcs_aware', self.vcs__reset,  # pylint: disable=no-member
-                weak=True, autosort=False,
+                "setopt.vcs_aware",
+                self.vcs__reset,  # pylint: disable=no-member
+                weak=True,
+                autosort=False,
             )
             self._vcs_signal_handler_installed = True
         if self.settings.vcs_aware:
@@ -189,6 +198,7 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
             if not self.exists:
                 return
             function()
+
         return signal_function
 
     def request_resort(self):
@@ -269,6 +279,7 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
                     if hidden_filter_search(comp):
                         return False
                 return True
+
             filters.append(hidden_filter_func)
         if self.narrow_filter:
             # pylint: disable=unsupported-membership-test
@@ -278,20 +289,21 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
             # still None.
             filters.append(lambda fobj: fobj.basename in self.narrow_filter)
         if self.settings.global_inode_type_filter or self.inode_type_filter:
+
             def inode_filter_func(obj):
                 # Use local inode_type_filter if present, global otherwise
                 inode_filter = self.inode_type_filter or self.settings.global_inode_type_filter
                 # Apply filter
-                if InodeFilterConstants.DIRS in inode_filter and \
-                        obj.is_directory:
+                if InodeFilterConstants.DIRS in inode_filter and obj.is_directory:
                     return True
-                elif InodeFilterConstants.FILES in inode_filter and \
-                        obj.is_file and not obj.is_link:
+                elif (
+                    InodeFilterConstants.FILES in inode_filter and obj.is_file and not obj.is_link
+                ):
                     return True
-                elif InodeFilterConstants.LINKS in inode_filter and \
-                        obj.is_link:
+                elif InodeFilterConstants.LINKS in inode_filter and obj.is_link:
                     return True
                 return False
+
             filters.append(inode_filter_func)
         if self.filter:
             filter_search = self.filter.search
@@ -342,8 +354,8 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
                             os.path.join("/", dirpath, d)
                             for d in dirnames
                             if self.flat == -1
-                            or (dirpath.count(os.path.sep)
-                                - mypath.count(os.path.sep)) <= self.flat
+                            or (dirpath.count(os.path.sep) - mypath.count(os.path.sep))
+                            <= self.flat
                         ]
                         filelist += dirlist
                         filelist += [os.path.join("/", dirpath, f) for f in filenames]
@@ -351,8 +363,9 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
                     self.load_content_mtime = mtimelevel(mypath, self.flat)
                 else:
                     filelist = os.listdir(mypath)
-                    filenames = [mypath + (mypath == '/' and fname or '/' + fname)
-                                 for fname in filelist]
+                    filenames = [
+                        mypath + (mypath == "/" and fname or "/" + fname) for fname in filelist
+                    ]
                     self.load_content_mtime = os.stat(mypath).st_mtime
 
                 if self.cumulative_size_calculated:
@@ -363,15 +376,14 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
                         if self.fm.settings.autoupdate_cumulative_size:
                             self.look_up_cumulative_size()
                         else:
-                            self.infostring = ' %s' % human_readable(
-                                self.size, separator='? ')
+                            self.infostring = " %s" % human_readable(self.size, separator="? ")
                     else:
-                        self.infostring = ' %s' % human_readable(self.size)
+                        self.infostring = " %s" % human_readable(self.size)
                 else:
                     self.size = len(filelist)
-                    self.infostring = ' %d' % self.size
+                    self.infostring = " %d" % self.size
                 if self.is_link:
-                    self.infostring = '->' + self.infostring
+                    self.infostring = "->" + self.infostring
 
                 yield
 
@@ -399,8 +411,12 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
                         is_a_dir = False
 
                     if is_a_dir:
-                        item = self.fm.get_directory(name, preload=stats, path_is_abs=True,
-                                                     basename_is_rel_to=basename_is_rel_to)
+                        item = self.fm.get_directory(
+                            name,
+                            preload=stats,
+                            path_is_abs=True,
+                            basename_is_rel_to=basename_is_rel_to,
+                        )
                         item.load_if_outdated()
                         if self.flat:
                             item.relative_path = os.path.relpath(item.path, self.path)
@@ -411,20 +427,27 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
                             if item.vcs.is_root_pointer:
                                 has_vcschild = True
                             else:
-                                item.vcsstatus = \
+                                item.vcsstatus = (
                                     item.vcs.rootvcs.status_subpath(  # pylint: disable=no-member
                                         os.path.join(self.realpath, item.basename),
                                         is_directory=True,
                                     )
+                                )
                     else:
-                        item = File(name, preload=stats, path_is_abs=True,
-                                    basename_is_rel_to=basename_is_rel_to)
+                        item = File(
+                            name,
+                            preload=stats,
+                            path_is_abs=True,
+                            basename_is_rel_to=basename_is_rel_to,
+                        )
                         item.load()
                         disk_usage += item.size
                         if self.vcs and self.vcs.track:
-                            item.vcsstatus = \
+                            item.vcsstatus = (
                                 self.vcs.rootvcs.status_subpath(  # pylint: disable=no-member
-                                    os.path.join(self.realpath, item.basename))
+                                    os.path.join(self.realpath, item.basename)
+                                )
+                            )
 
                     files.append(item)
                     self.percent = 100 * len(files) // len(filenames)
@@ -465,6 +488,7 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
             self.fm.signal_emit("finished_loading_dir", directory=self)
             if self.vcs:
                 self.fm.ui.vcsthread.process(self)
+
     # pylint: enable=too-many-locals,too-many-branches,too-many-statements
 
     def unload(self):
@@ -489,7 +513,7 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
                 return
 
             if schedule is None:
-                schedule = True   # was: self.size > 30
+                schedule = True  # was: self.size > 30
 
             if self.load_generator is None:
                 self.load_generator = self.load_bit_by_bit()
@@ -517,12 +541,10 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
         except KeyError:
             sort_func = sort_by_basename
 
-        if self.settings.sort_case_insensitive and \
-                sort_func == sort_by_basename:
+        if self.settings.sort_case_insensitive and sort_func == sort_by_basename:
             sort_func = sort_by_basename_icase
 
-        if self.settings.sort_case_insensitive and \
-                sort_func == sort_naturally:
+        if self.settings.sort_case_insensitive and sort_func == sort_naturally:
             sort_func = sort_naturally_icase
 
         # XXX Does not work with usermade sorting functions :S
@@ -562,7 +584,7 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
     def look_up_cumulative_size(self):
         self.cumulative_size_calculated = True
         self.size = self._get_cumulative_size()
-        self.infostring = ('-> ' if self.is_link else ' ') + human_readable(self.size)
+        self.infostring = ("-> " if self.is_link else " ") + human_readable(self.size)
 
     @lazy_property
     def size(self):  # pylint: disable=method-hidden
@@ -578,9 +600,9 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
             return 0
         else:
             if size is None:
-                self.infostring = ''
+                self.infostring = ""
             else:
-                self.infostring = ' %d' % size
+                self.infostring = " %d" % size
             self.accessible = True
             self.runnable = True
             return size
@@ -589,7 +611,7 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
     def infostring(self):  # pylint: disable=method-hidden
         self.size  # trigger the lazy property initializer pylint: disable=pointless-statement
         if self.is_link:
-            return '->' + self.infostring
+            return "->" + self.infostring
         return self.infostring
 
     @lazy_property
@@ -614,16 +636,14 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
         if self.empty():
             return
 
-        Accumulator.move_to_obj(self, arg, attr='path')
+        Accumulator.move_to_obj(self, arg, attr="path")
 
     def search_fnc(self, fnc, offset=1, forward=True):
         length = len(self)
         if forward:
-            generator = ((self.pointer + (x + offset)) % length
-                         for x in range(length - 1))
+            generator = ((self.pointer + (x + offset)) % length for x in range(length - 1))
         else:
-            generator = ((self.pointer - (x + offset)) % length
-                         for x in range(length - 1))
+            generator = ((self.pointer - (x + offset)) % length for x in range(length - 1))
 
         for i in generator:
             _file = self.files[i]
@@ -721,6 +741,7 @@ class Directory(  # pylint: disable=too-many-instance-attributes,too-many-public
     def __nonzero__(self):
         """Always True"""
         return True
+
     __bool__ = __nonzero__
 
     def __len__(self):

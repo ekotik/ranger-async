@@ -1,14 +1,13 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
-from stat import S_IXOTH, S_IFREG
-from os import listdir, environ, stat
 import shlex
+from os import environ, listdir, stat
+from stat import S_IFREG, S_IXOTH
 
 from ranger_async.ext.iter_tools import unique
-
 
 _cached_executables = None  # pylint: disable=invalid-name
 
@@ -28,10 +27,10 @@ def get_executables_uncached(*paths):
     """
     if not paths:
         try:
-            pathstring = environ['PATH']
+            pathstring = environ["PATH"]
         except KeyError:
             return ()
-        paths = unique(pathstring.split(':'))
+        paths = unique(pathstring.split(":"))
 
     executables = set()
     for path in paths:
@@ -40,7 +39,7 @@ def get_executables_uncached(*paths):
         except OSError:
             continue
         for item in content:
-            abspath = path + '/' + item
+            abspath = path + "/" + item
             try:
                 filestat = stat(abspath)
             except OSError:
@@ -55,9 +54,9 @@ def get_term():
 
     Either $TERMCMD, $TERM, "x-terminal-emulator" or "xterm", in this order.
     """
-    command = environ.get('TERMCMD', environ.get('TERM'))
+    command = environ.get("TERMCMD", environ.get("TERM"))
     if shlex.split(command)[0] not in get_executables():
-        command = 'x-terminal-emulator'
+        command = "x-terminal-emulator"
         if command not in get_executables():
-            command = 'xterm'
+            command = "xterm"
     return command

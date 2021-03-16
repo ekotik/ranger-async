@@ -13,7 +13,7 @@ attr ^= reverse
 bool(attr & reverse) # => False
 """
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import curses
 
@@ -73,4 +73,4 @@ default_colors = (default, default, normal)
 
 curses.setupterm()
 # Adding BRIGHT to a color achieves what `bold` was used for.
-BRIGHT = 8 if curses.tigetnum('colors') >= 16 else 0
+BRIGHT = 8 if curses.tigetnum("colors") >= 16 else 0

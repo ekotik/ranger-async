@@ -11,19 +11,18 @@ The database is contained in a local .metadata.json file.
 # TODO: Update metadata keys if a file gets renamed/moved
 # TODO: A global metadata file, maybe as a replacement for tags
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import copy
-from os.path import join, dirname, exists, basename
-from ranger_async.ext.openstruct import DefaultOpenStruct as ostruct
+from os.path import basename, dirname, exists, join
 
+from ranger_async.ext.openstruct import DefaultOpenStruct as ostruct
 
 METADATA_FILE_NAME = ".metadata.json"
 DEEP_SEARCH_DEFAULT = False
 
 
 class MetadataManager(object):
-
     def __init__(self):
         # metadata_cache maps filenames to dicts containing their metadata
         self.metadata_cache = dict()

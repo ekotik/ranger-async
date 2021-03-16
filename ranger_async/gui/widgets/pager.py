@@ -3,17 +3,16 @@
 
 """The pager displays text and allows you to scroll inside it."""
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import curses
 import logging
 
-from ranger_async.gui import ansi
 from ranger_async.ext.direction import Direction
 from ranger_async.ext.img_display import ImgDisplayUnsupportedException
+from ranger_async.gui import ansi
 
 from . import Widget
-
 
 LOG = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class Pager(Widget):  # pylint: disable=too-many-instance-attributes
             try:
                 self.source.close()
             except OSError as ex:
-                LOG.error('Unable to close pager source')
+                LOG.error("Unable to close pager source")
                 LOG.exception(ex)
 
     def open(self):
@@ -89,8 +88,7 @@ class Pager(Widget):  # pylint: disable=too-many-instance-attributes
             self.old_source = self.source
             self.need_redraw = True
 
-        if self.old_scroll_begin != self.scroll_begin or \
-                self.old_startx != self.startx:
+        if self.old_scroll_begin != self.scroll_begin or self.old_startx != self.startx:
             self.old_startx = self.startx
             self.old_scroll_begin = self.scroll_begin
             self.need_redraw = True
@@ -102,8 +100,7 @@ class Pager(Widget):  # pylint: disable=too-many-instance-attributes
 
             if not self.image:
                 scroll_pos = self.scroll_begin + self.scroll_extra
-                line_gen = self._generate_lines(
-                    starty=scroll_pos, startx=self.startx)
+                line_gen = self._generate_lines(starty=scroll_pos, startx=self.startx)
 
                 for line, i in zip(line_gen, range(self.hei)):
                     self._draw_line(i, line)
@@ -115,8 +112,7 @@ class Pager(Widget):  # pylint: disable=too-many-instance-attributes
             self.source = None
             self.need_redraw_image = False
             try:
-                self.fm.image_displayer.draw(self.image, self.x, self.y,
-                                             self.wid, self.hei)
+                self.fm.image_displayer.draw(self.image, self.x, self.y, self.wid, self.hei)
             except ImgDisplayUnsupportedException as ex:
                 self.fm.settings.preview_images = False
                 self.fm.notify(ex, bad=True)
@@ -128,7 +124,7 @@ class Pager(Widget):  # pylint: disable=too-many-instance-attributes
     def _draw_line(self, i, line):
         if self.markup is None:
             self.addstr(i, 0, line)
-        elif self.markup == 'ansi':
+        elif self.markup == "ansi":
             try:
                 self.win.move(i, 0)
             except curses.error:
@@ -149,29 +145,27 @@ class Pager(Widget):  # pylint: disable=too-many-instance-attributes
                 maximum=self.max_width,
                 current=self.startx,
                 pagesize=self.wid,
-                offset=-self.wid + 1)
+                offset=-self.wid + 1,
+            )
         if direction.vertical():
             movement = dict(
                 direction=direction.down(),
                 override=narg,
                 current=self.scroll_begin,
                 pagesize=self.hei,
-                offset=-self.hei + 1)
+                offset=-self.hei + 1,
+            )
             if self.source_is_stream:
                 # For streams, we first pretend that the content ends much later,
                 # in case there are still unread lines.
-                desired_position = direction.move(
-                    maximum=len(self.lines) + 9999,
-                    **movement)
+                desired_position = direction.move(maximum=len(self.lines) + 9999, **movement)
                 # Then, read the new lines as needed to produce a more accurate
                 # maximum for the movement:
                 self._get_line(desired_position + self.hei)
-            self.scroll_begin = direction.move(
-                maximum=len(self.lines),
-                **movement)
+            self.scroll_begin = direction.move(maximum=len(self.lines), **movement)
 
     def press(self, key):
-        self.fm.ui.keymaps.use_keymap('pager')
+        self.fm.ui.keymaps.use_keymap("pager")
         self.fm.ui.press(key)
 
     def set_image(self, image):
@@ -194,19 +188,19 @@ class Pager(Widget):  # pylint: disable=too-many-instance-attributes
             self.lines = source.splitlines()
             if self.lines:
                 self.max_width = max(len(line) for line in self.lines)
-        elif hasattr(source, '__getitem__'):
+        elif hasattr(source, "__getitem__"):
             self.source_is_stream = False
             self.lines = source
             if self.lines:
                 self.max_width = max(len(line) for line in source)
-        elif hasattr(source, 'readline'):
+        elif hasattr(source, "readline"):
             self.source_is_stream = True
             self.lines = []
         else:
             self.source = None
             self.source_is_stream = False
             return False
-        self.markup = 'ansi'
+        self.markup = "ansi"
 
         if not self.source_is_stream and strip:
             self.lines = [line.strip() for line in self.lines]
@@ -246,18 +240,19 @@ class Pager(Widget):  # pylint: disable=too-many-instance-attributes
         while True:
             try:
                 line = self._get_line(i).expandtabs(4)
-                for part in ((0,) if not
-                             self.fm.settings.wrap_plaintext_previews else
-                             range(max(1, ((len(line) - 1) // self.wid) + 1))):
+                for part in (
+                    (0,)
+                    if not self.fm.settings.wrap_plaintext_previews
+                    else range(max(1, ((len(line) - 1) // self.wid) + 1))
+                ):
                     shift = part * self.wid
-                    if self.markup == 'ansi':
-                        line_bit = (ansi.char_slice(line, startx + shift,
-                                                    self.wid + shift)
-                                    + ansi.reset)
+                    if self.markup == "ansi":
+                        line_bit = (
+                            ansi.char_slice(line, startx + shift, self.wid + shift) + ansi.reset
+                        )
                     else:
-                        line_bit = line[startx + shift:self.wid + startx
-                                        + shift]
-                    yield line_bit.rstrip().replace('\r\n', '\n')
+                        line_bit = line[startx + shift : self.wid + startx + shift]
+                    yield line_bit.rstrip().replace("\r\n", "\n")
             except IndexError:
                 return
             i += 1

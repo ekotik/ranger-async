@@ -1,11 +1,12 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 from os import devnull
-from subprocess import Popen, PIPE, CalledProcessError
-ENCODING = 'utf-8'
+from subprocess import PIPE, CalledProcessError, Popen
+
+ENCODING = "utf-8"
 
 
 def check_output(popenargs, **kwargs):
@@ -23,15 +24,15 @@ def check_output(popenargs, **kwargs):
     Further keyword arguments are passed to Popen.
     """
 
-    do_decode = kwargs.pop('decode', True)
-    kwargs.setdefault('stdout', PIPE)
-    kwargs.setdefault('shell', isinstance(popenargs, str))
+    do_decode = kwargs.pop("decode", True)
+    kwargs.setdefault("stdout", PIPE)
+    kwargs.setdefault("shell", isinstance(popenargs, str))
 
-    if 'stderr' in kwargs:
+    if "stderr" in kwargs:
         process = Popen(popenargs, **kwargs)
         stdout, _ = process.communicate()
     else:
-        with open(devnull, mode='w') as fd_devnull:
+        with open(devnull, mode="w") as fd_devnull:
             process = Popen(popenargs, stderr=fd_devnull, **kwargs)
             stdout, _ = process.communicate()
 

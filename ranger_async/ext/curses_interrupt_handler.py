@@ -8,7 +8,7 @@ rise a KeyboardInterrupt exception and handle it by pushing
 a Ctrl+C (ASCII value 3) to the curses getch stack.
 """
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import curses
 import signal
@@ -22,6 +22,7 @@ def catch_interrupt(boolean=True):
     old_value = _do_catch_interrupt
     _do_catch_interrupt = bool(boolean)
     return old_value
+
 
 # The handler which will be used in signal.signal()
 

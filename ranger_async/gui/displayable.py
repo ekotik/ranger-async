@@ -1,7 +1,7 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 import curses
 
@@ -10,7 +10,8 @@ from ranger_async.gui.curses_shortcuts import CursesShortcuts
 
 
 class Displayable(  # pylint: disable=too-many-instance-attributes
-        FileManagerAware, CursesShortcuts):
+    FileManagerAware, CursesShortcuts
+):
     """Displayables are objects which are displayed on the screen.
 
     This is just the abstract class, defining basic operations
@@ -45,8 +46,9 @@ class Displayable(  # pylint: disable=too-many-instance-attributes
         settings, fm -- inherited shared variables
     """
 
-    def __init__(self, win,  # pylint: disable=super-init-not-called
-                 env=None, fm=None, settings=None):
+    def __init__(
+        self, win, env=None, fm=None, settings=None  # pylint: disable=super-init-not-called
+    ):
         from ranger_async.gui.ui import UI
 
         if env is not None:
@@ -77,6 +79,7 @@ class Displayable(  # pylint: disable=too-many-instance-attributes
     def __nonzero__(self):
         """Always True"""
         return True
+
     __bool__ = __nonzero__
 
     def __contains__(self, item):
@@ -110,8 +113,7 @@ class Displayable(  # pylint: disable=too-many-instance-attributes
 
         x and y should be absolute coordinates.
         """
-        return (self.x <= x < self.x + self.wid) and \
-            (self.y <= y < self.y + self.hei)
+        return (self.x <= x < self.x + self.wid) and (self.y <= y < self.y + self.hei)
 
     def click(self, event):
         """Called when a mouse key is pressed and self.focused is True.
@@ -155,8 +157,11 @@ class Displayable(  # pylint: disable=too-many-instance-attributes
                 wid = maxx - x
 
             if x < 0 or y < 0:
-                self.fm.notify("Warning: Subwindow origin below zero for <%s> "
-                               "(x = %d, y = %d)" % (self, x, y), bad=True)
+                self.fm.notify(
+                    "Warning: Subwindow origin below zero for <%s> "
+                    "(x = %d, y = %d)" % (self, x, y),
+                    bad=True,
+                )
 
             if x + wid > maxx or y + hei > maxy:
                 self.fm.notify(

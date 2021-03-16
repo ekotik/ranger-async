@@ -1,7 +1,7 @@
 # This file is part of ranger-async, the console file manager.
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 from ranger_async import PY3
 from ranger_async.ext.widestring import WideString, utf_char_width
@@ -51,7 +51,7 @@ class Bar(object):
                 sumsize = leftsize + rightsize
 
         if sumsize < wid:
-            self.fill_gap(' ', (wid - sumsize), gapwidth=True)
+            self.fill_gap(" ", (wid - sumsize), gapwidth=True)
 
     def shrink_from_the_left(self, wid):
         fixedsize = self.fixedsize()
@@ -61,7 +61,7 @@ class Bar(object):
         rightsize = self.right.sumsize()
         oversize = leftsize + rightsize - wid
         if oversize <= 0:
-            return self.fill_gap(' ', wid, gapwidth=False)
+            return self.fill_gap(" ", wid, gapwidth=False)
 
         # Shrink items to a minimum size until there is enough room.
         for item in self.left:
@@ -69,7 +69,7 @@ class Bar(object):
                 itemlen = len(item)
                 if oversize > itemlen - item.min_size:
                     item.cut_off_to(item.min_size)
-                    oversize -= (itemlen - item.min_size)
+                    oversize -= itemlen - item.min_size
                 else:
                     item.cut_off(oversize)
                     break
@@ -82,14 +82,13 @@ class Bar(object):
             wid = wid - self.sumsize()
 
         if wid > 0:
-            self.gap.add(char * wid, 'space')
+            self.gap.add(char * wid, "space")
 
     def combine(self):
         return self.left + self.gap + self.right
 
 
 class BarSide(list):
-
     def __init__(self, base_color_tag):  # pylint: disable=super-init-not-called
         self.base_color_tag = base_color_tag
 
@@ -99,7 +98,7 @@ class BarSide(list):
         self.append(colorstr)
 
     def add_space(self, n=1):
-        self.add(' ' * n, 'space')
+        self.add(" " * n, "space")
 
     def sumsize(self):
         return sum(len(item) for item in self)
@@ -115,7 +114,6 @@ class BarSide(list):
 
 
 class ColoredString(object):
-
     def __init__(self, string, *lst):
         self.string = WideString(string)
         self.lst = lst
@@ -125,7 +123,7 @@ class ColoredString(object):
         elif PY3:
             self.min_size = utf_char_width(string[0])
         else:
-            self.min_size = utf_char_width(self.string.chars[0].decode('utf-8'))
+            self.min_size = utf_char_width(self.string.chars[0].decode("utf-8"))
 
     def cut_off(self, n):
         if n >= 1:
@@ -133,7 +131,7 @@ class ColoredString(object):
 
     def cut_off_to(self, n):
         if n < self.min_size:
-            self.string = self.string[:self.min_size]
+            self.string = self.string[: self.min_size]
         elif n < len(self.string):
             self.string = self.string[:n]
 

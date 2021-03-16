@@ -1,7 +1,6 @@
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 from ranger_async.container import history
-
 
 HISTORY_TEST_ENTRIES = [str(k) for k in range(20)]
 OTHER_TEST_ENTRIES = [str(k) for k in range(40, 45)]
@@ -85,7 +84,7 @@ def testhistorybasic():
     assert list(otherh)[-3:] == ["42", "43", "44"]
     hist.rebase(otherh)
     assert hist.current() == old_current_item
-    assert list(hist)[-3:] == ['43', '44', old_current_item]
+    assert list(hist)[-3:] == ["43", "44", old_current_item]
 
     # modify, modifies the top of the stack
     hist.modify("23")

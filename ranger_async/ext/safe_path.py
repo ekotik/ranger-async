@@ -2,9 +2,10 @@
 # License: GNU GPL version 3, see the file "AUTHORS" for details.
 
 from __future__ import absolute_import
+
 import os
 
-SUFFIX = '_'
+SUFFIX = "_"
 
 
 def get_safe_path(dst):

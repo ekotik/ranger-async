@@ -3,7 +3,7 @@
 
 # TODO: rewrite to use deque instead of list
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 
 class HistoryEmptyException(Exception):
@@ -11,7 +11,6 @@ class HistoryEmptyException(Exception):
 
 
 class History(object):
-
     def __init__(self, maxlen=None, unique=True):
         assert maxlen is not None, "maxlen cannot be None"
         if isinstance(maxlen, History):
@@ -28,7 +27,7 @@ class History(object):
     def add(self, item):
         # Remove everything after index
         if self.index < len(self.history) - 2:
-            del self.history[:self.index + 1]
+            del self.history[: self.index + 1]
         # Remove Duplicates
         if self.unique:
             try:
@@ -77,11 +76,11 @@ class History(object):
         else:
             future_length = len(self.history) - self.index - 1
 
-        self.history[:self.index] = list(
-            other_history.history[:other_history.index + 1])
+        self.history[: self.index] = list(other_history.history[: other_history.index + 1])
         if len(self.history) > self.maxlen:
             self.history = self.history[
-                -self.maxlen:]  # pylint: disable=invalid-unary-operand-type
+                -self.maxlen :
+            ]  # pylint: disable=invalid-unary-operand-type
 
         self.index = len(self.history) - future_length - 1
         assert self.index < len(self.history)
