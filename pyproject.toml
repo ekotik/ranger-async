@@ -10,6 +10,7 @@ xfail_strict = true
 format = "colored"
 max_line_length = 99
 show_source = true
+whitelist = "whitelist.txt"
 
 # list of plugins and rules for them
 [tool.flakehell.plugins]
