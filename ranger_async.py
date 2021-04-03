@@ -25,6 +25,7 @@ return "$return_value"
 
 from __future__ import absolute_import, division, print_function
 
+import asyncio
 import sys
 
 # Need to find out whether or not the flag --clean was used ASAP,
@@ -35,4 +36,4 @@ sys.dont_write_bytecode = "-c" in ARGV or "--clean" in ARGV
 # Start ranger-async
 import ranger_async  # NOQA pylint: disable=import-self,wrong-import-position
 
-sys.exit(ranger_async.main())  # pylint: disable=no-member
+sys.exit(asyncio.run(ranger_async.main()))  # pylint: disable=no-member

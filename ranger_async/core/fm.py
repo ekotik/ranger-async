@@ -362,7 +362,7 @@ class FM(Actions, SignalDispatcher):  # pylint: disable=too-many-instance-attrib
         self.settings.signal_garbage_collect()
         self.signal_garbage_collect()
 
-    def loop(self):
+    async def loop(self):
         """The main loop of ranger-async.
 
         It consists of:

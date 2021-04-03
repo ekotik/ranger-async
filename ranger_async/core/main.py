@@ -24,7 +24,7 @@ VERSION_MSG = [
 ]
 
 
-def main(
+async def main(
     # pylint: disable=too-many-locals,too-many-return-statements
     # pylint: disable=too-many-branches,too-many-statements
 ):
@@ -200,7 +200,7 @@ def main(
             cProfile.run("ranger_async.__fm.loop()", profile_file)
             profile = pstats.Stats(profile_file, stream=sys.stderr)
         else:
-            fm.loop()
+            await fm.loop()
 
     except Exception:  # pylint: disable=broad-except
         import traceback
