@@ -16,15 +16,18 @@ baseline = "baseline.txt"
 # list of plugins and rules for them
 [tool.flakehell.plugins]
 "flake8-*" = ["+*"]
+flake8-commas = ["-*"]
 flake8-docstrings = ["+*","-D10*"]
-flake8-spellcheck = ["-*"]
 flake8-isort = ["-*"]
+flake8-quotes = ["-*"]
+flake8-spellcheck = ["-*"]
 mccabe = ["+*"]
 pep8-naming = ["-*"]
 pycodestyle = ["+*","-E302","-E305"]
 pyflakes = ["+*","-F401"]
 pylint = ["+*"]
-wemake-python-styleguide = ["+*","-WPS111","-WPS201","-WPS210","-WPS235","-WPS430","-WPS433"]
+wemake-python-styleguide = ["+*","-WPS111","-WPS201","-WPS210","-WPS235","-WPS306","-WPS412","-WPS420","-WPS425","-WPS430","-WPS433","-WPS602"]
+
 # black
 [tool.black]
 line-length = 99
