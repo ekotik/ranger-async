@@ -1,14 +1,12 @@
-import asyncio
-import curses
-import io
 import optparse
 import os
+import signal
 import sys
-from asyncio.unix_events import ThreadedChildWatcher
-from test.test_asyncio import utils as test_utils
-from test.test_asyncio.test_subprocess import PROGRAM_CAT, SubprocessWatcherMixin
-from unittest import mock
+from multiprocessing import Process
+from test.test_asyncio.test_subprocess import SubprocessThreadedWatcherTests
 from unittest.mock import patch  # noqa: WPS458
+
+from support import RangerAsyncTestSupportStdinMixin, delayed, raise_signal
 
 from ranger_async.core import main as ra_core_main
 
@@ -31,58 +29,58 @@ default_args = {
 }
 
 
-class RangerAsyncTests(SubprocessWatcherMixin, test_utils.TestCase):
+@patch('ranger_async.core.main.sys.stdin', spec=sys.stdin)
+@patch(
+    'ranger_async.core.main.parse_arguments',
+    return_value=optparse.Values(defaults=default_args),
+)
+class RangerAsyncCoreMainTestsMixin(RangerAsyncTestSupportStdinMixin):
+    def test_main_loop(self, mock_parse, mock_stdin):
 
-    Watcher = ThreadedChildWatcher  # noqa: WPS115
+        p = Process(
+            target=delayed(os.write, delay=0.2), args=(self.win, b':quit\n')  # noqa: WPS432
+        )
+        p.start()
+        res = self.loop.run_until_complete(ra_core_main.main())
+        p.join()
 
+        self.assertEqual(res, 0)
+
+    def test_main_cancel(self, mock_parse, mock_stdin):
+
+        for i, debug in enumerate([True, False]):
+            with self.subTest(i=i):
+                mock_parse.return_value = optparse.Values(
+                    defaults={**default_args, **{'debug': debug}}
+                )
+                p1 = Process(
+                    target=delayed(raise_signal, delay=0.3),  # noqa: WPS432
+                    args=(os.getpid(), signal.SIGINT),
+                )
+                p2 = Process(target=delayed(os.write, delay=0.5), args=(self.win, b':quit\n'))
+                p1.start()
+                p2.start()
+                res = self.loop.run_until_complete(ra_core_main.main())
+                p1.join()
+                p2.join()
+
+                from ranger_async import args
+
+                self.assertEqual(args.debug, debug)
+                self.assertEqual(res, 0)
+                os.set_blocking(self.rin, False)
+                if debug:
+                    self.assertEqual(os.read(self.rin, 100), b':quit\n')
+                else:
+                    with self.assertRaises(BlockingIOError):
+                        os.read(self.rin, 100)  # noqa: WPS220
+
+
+class RangerAsyncCoreMainTests(SubprocessThreadedWatcherTests, RangerAsyncCoreMainTestsMixin):
     def setUp(self):
         super().setUp()
-
-        os.environ['TERM'] = 'xterm'
-        self._stdin = sys.stdin.fileno()
-        self._stdout = sys.stdout.fileno()
-        self.rin, self.win = os.pipe()  # noqa: WPS414
-        self.rout, self.wout = os.pipe()  # noqa: WPS414
-
-        os.dup2(self.rin, sys.stdin.fileno())
-        os.dup2(self.wout, sys.stdout.fileno())
+        RangerAsyncCoreMainTestsMixin.setUp(self)
 
     def tearDown(self):
+        RangerAsyncCoreMainTestsMixin.tearDown(self)
         super().tearDown()
-
-        os.dup2(self._stdin, sys.stdin.fileno())
-        os.dup2(self._stdout, sys.stdout.fileno())
-
-        os.close(self.rin)
-        os.close(self.win)
-        os.close(self.rout)
-        os.close(self.wout)
-        os.unsetenv('TERM')
-
-    @patch(
-        'ranger_async.core.main.parse_arguments',
-        return_value=optparse.Values(defaults=default_args),
-    )
-    @patch('ranger_async.core.main.sys.stdin')
-    def test_main(self, mock_stdin, mock_parse):
-        mock_stdin_args = {'isatty.return_value': True}
-        mock_stdin.configure_mock(**mock_stdin_args)
-
-        async def run(data_in):
-            r, w = os.pipe2(os.O_NONBLOCK | os.O_CLOEXEC)  # noqa: WPS111
-            proc = await asyncio.create_subprocess_exec(
-                *PROGRAM_CAT,
-                stdin=r,
-                stdout=self.win,
-                stderr=self.win,
-            )
-            os.write(w, data_in)
-            task = asyncio.create_task(proc.communicate(data_in))
-            task.add_done_callback(lambda h: map(os.close, [r, w]))
-            await proc.communicate()
-            res = await asyncio.wait_for(ra_core_main.main(), 1.0)
-            return res, proc.returncode
-
-        res, ret = self.loop.run_until_complete(run(b':quit\n'))
-        self.assertEqual(res, 0)
-        self.assertEqual(ret, 0)

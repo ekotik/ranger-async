@@ -10,6 +10,7 @@ a Ctrl+C (ASCII value 3) to the curses getch stack.
 
 from __future__ import absolute_import, division, print_function
 
+import asyncio
 import curses
 import signal
 
@@ -39,9 +40,12 @@ def _interrupt_handler(signum, frame):
 
 def install_interrupt_handler():
     """Install the custom interrupt_handler"""
-    signal.signal(signal.SIGINT, _interrupt_handler)
+    loop = asyncio.get_running_loop()
+    loop.add_signal_handler(signal.SIGINT, _interrupt_handler)
 
 
 def restore_interrupt_handler():
     """Restore the default_int_handler"""
-    signal.signal(signal.SIGINT, signal.default_int_handler)
+    loop = asyncio.get_running_loop()
+    loop.remove_signal_handler(signal.SIGINT)
+    loop.add_signal_handler(signal.SIGINT, signal.default_int_handler)
