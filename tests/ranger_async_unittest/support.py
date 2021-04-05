@@ -1,7 +1,28 @@
+import asyncio
 import curses
 import os
 import signal
 import sys
+
+
+def delayed(func, delay=0.1):
+    import time
+
+    def delayed_call(*args, **kwargs):
+        time.sleep(delay)
+        func(*args, **kwargs)
+
+    return delayed_call
+
+
+class RangerAsyncTestSupportSignalMixin:
+    @staticmethod
+    def signal_default(sig):
+        signal.signal(sig, signal.SIG_DFL)
+
+    @staticmethod
+    def raise_signal(pid, sig):
+        os.kill(pid, sig)
 
 
 class RangerAsyncTestSupportStdinMixin:
@@ -31,25 +52,7 @@ class RangerAsyncTestSupportAsyncioLoopMixin:
     def setUp(self):
         self.loop = asyncio.get_event_loop()
         self.loop.add_signal_handler = signal.signal
-        self.loop.remove_signal_handler
+        self.loop.remove_signal_handler = RangerAsyncTestSupportSignalMixin.signal_default
 
     def tearDown(self):
         pass
-
-
-def delayed(func, delay=0.1):
-    import time
-
-    def delayed_call(*args, **kwargs):
-        time.sleep(delay)
-        func(*args, **kwargs)
-
-    return delayed_call
-
-
-def signal_default(sig):
-    signal.signal(sig, signal.SIG_DFL)
-
-
-def raise_signal(pid, sig):
-    os.kill(pid, sig)

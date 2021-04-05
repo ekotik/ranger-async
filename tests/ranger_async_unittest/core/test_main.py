@@ -6,7 +6,7 @@ from multiprocessing import Process
 from test.test_asyncio.test_subprocess import SubprocessThreadedWatcherTests
 from unittest.mock import patch  # noqa: WPS458
 
-from support import RangerAsyncTestSupportStdinMixin, delayed, raise_signal
+from support import RangerAsyncTestSupportSignalMixin, RangerAsyncTestSupportStdinMixin, delayed
 
 from ranger_async.core import main as ra_core_main
 
@@ -34,7 +34,9 @@ default_args = {
     'ranger_async.core.main.parse_arguments',
     return_value=optparse.Values(defaults=default_args),
 )
-class RangerAsyncCoreMainTestsMixin(RangerAsyncTestSupportStdinMixin):
+class RangerAsyncCoreMainTestsMixin(
+    RangerAsyncTestSupportStdinMixin, RangerAsyncTestSupportSignalMixin
+):
     def test_main_loop(self, mock_parse, mock_stdin):
 
         p = Process(
@@ -54,7 +56,9 @@ class RangerAsyncCoreMainTestsMixin(RangerAsyncTestSupportStdinMixin):
                     defaults={**default_args, **{'debug': debug}}
                 )
                 p1 = Process(
-                    target=delayed(raise_signal, delay=0.3),  # noqa: WPS432
+                    target=delayed(
+                        RangerAsyncTestSupportSignalMixin.raise_signal, delay=0.3  # noqa: WPS432
+                    ),
                     args=(os.getpid(), signal.SIGINT),
                 )
                 p2 = Process(target=delayed(os.write, delay=0.5), args=(self.win, b':quit\n'))

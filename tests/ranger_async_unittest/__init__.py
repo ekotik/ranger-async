@@ -19,3 +19,4 @@ if __name__ == '__main__':
     sys.path.append(top_dir)
     runner = unittest.TextTestRunner()
     runner.run(suite_tests(os.path.join(tests_dir, "core")))
+    runner.run(suite_tests(os.path.join(tests_dir, "ext")))
